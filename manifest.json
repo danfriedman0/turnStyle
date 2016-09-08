@@ -15,7 +15,7 @@
 		"storage"
 	],
 	"background": {
-		"scripts": ["background.js"],
+		"scripts": ["turnstyle.js"],
 		"persistent": false
 	}
 }
