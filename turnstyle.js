@@ -36,15 +36,22 @@ function saveStyle(stylesheet) {
 }
 
 /**
- * loadSettings: restyle the page if there are any saved settings in chrome.storage
+ * loadSettings: look for saved settings in chrome.storage; if there are any, restyle the
+ * page and send a message to the popup script to change the popup text
  */
 function loadSettings() {
 	chrome.storage.sync.get("turnStyle", function(obj) {
 		if (obj && obj.turnStyle) {
 			var pageUrl = location.origin;
 			var stylesheet = obj ? obj.turnStyle[pageUrl] : null;
-			if (stylesheet)
+			if (stylesheet) {
 				restyle(stylesheet);
+				chrome.runtime.sendMessage({
+					message: "loaded settings",
+					url: pageUrl,
+					stylesheet: stylesheet
+				});
+			}
 		}
 	});
 }
@@ -62,11 +69,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		var stylesheet = request.stylesheet ? request.stylesheet : "default.css";
 		restyle(stylesheet);
 		saveStyle(stylesheet);
-		sendResponse({response: "restyled"})
+		sendResponse({message: "restyled"})
 	}
 	else if (request.instruction === "clear storage") {
 		clearStorage();
-		sendResponse({response: "storage cleared"});
+		sendResponse({message: "storage cleared"});
 	}
 });
 
