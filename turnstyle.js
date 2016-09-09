@@ -57,20 +57,17 @@ function clearStorage() {
 }
 
 // Listen for messages from popup.js
-chrome.runtime.onConnect.addListener(function(port) {
-	console.assert(port.name === "turnstyle");
-	port.onMessage.addListener(function(msg) {
-		if (msg.instruction === "restyle") {
-			var stylesheet = msg.stylesheet ? msg.stylesheet : "default.css";
-			restyle(stylesheet);
-			saveStyle(stylesheet);
-			port.postMessage({response: "restyled"})
-		}
-		else if (msg.instruction === "clear storage") {
-			clearStorage();
-			port.postMessage({response: "storage cleared"});
-		}
-	});
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	if (request.instruction === "restyle") {
+		var stylesheet = request.stylesheet ? request.stylesheet : "default.css";
+		restyle(stylesheet);
+		saveStyle(stylesheet);
+		sendResponse({response: "restyled"})
+	}
+	else if (request.instruction === "clear storage") {
+		clearStorage();
+		sendResponse({response: "storage cleared"});
+	}
 });
 
 // on load
