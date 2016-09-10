@@ -121,7 +121,6 @@ function getStorageInfo() {
 // listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	if (request.instruction === "restyle") {
-		console.log(request);
 		var styleRules, styleName;
 		if (request.styleRules) {
 			styleRules = request.styleRules;
