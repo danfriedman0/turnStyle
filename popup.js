@@ -3,7 +3,7 @@
  * Dan Friedman
  *
  * This file controls the popup and relays messages between the popup and turnstyle.js, the
- * extension's content script.
+ * content script.
  */
 
 var restyle = document.getElementById("restyle");
@@ -21,7 +21,7 @@ function sendRequest(request, callback) {
 
 function displayResponse(response) {
 	var message = document.getElementById("message");
-	if (typeof response.toLowerCase() === "string")
+	if ((typeof response).toLowerCase() === "string")
 		message.innerHTML = response;
 	else if (response.message)
 		message.innerHTML = response.message;
@@ -36,8 +36,4 @@ clearStorage.addEventListener("click", function() {
 });
 
 
-// chrome.runtime.onMessage.addListener(function(request) {
-// 	if (request.msg === "loaded settings") {
-// 		var message = document.getElementById("message");
-// 	}
-// })
+
