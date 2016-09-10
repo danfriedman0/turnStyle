@@ -6,14 +6,30 @@
 			body {
 				width: 284px;
 				font-size: 100%;
-				text-align: center;
 			}
-
+			h4 {
+				margin: 0;
+			}
+			p {
+				font-size: .8em;
+    		text-align: left;
+			}
+			.flexbox {
+				display: flex;
+				justify-content: space-between;
+			}
 		</style>
 	</head>
 	<body>
 		<h4>turnStyle</h4>
-		<p id="message">Add your style rules below or click the "default" button to apply the default style.</p>
+		<div class="flexbox">
+			<p id="message">Add a style to this site: </p>
+			<select id="style-dropdown">
+				<option value=""></option>
+				<option value="default">default</option>
+				<option value="new-style">Create a new style</option>
+			</select>
+		</div>
 		<textarea id="style-name-input" rows="1" cols="42" placeholder="Style name"></textarea>
 		<textarea id="style-rules-input" rows="10" cols="42" placeholder="Style rules"></textarea>
 		<div id="buttons">
