@@ -12,12 +12,17 @@
 		</style>
 	</head>
 	<body>
-		<h3>turnStyle</h3>
-		<hr>	
-		<p id="message">Click on the button to restyle this page.</p>
-		<button id="restyle">restyle</button>
-		<button id="clear-settings">clear site settings</button>
-		<button id="clear-all">clear all saved settings</button>
+		<h4>turnStyle</h4>
+		<p id="message">Add your style rules below or click the "default" button to apply the default style.</p>
+		<textarea id="style-name-input" rows="1" cols="42" placeholder="Style name"></textarea>
+		<textarea id="style-rules-input" rows="10" cols="42" placeholder="Style rules"></textarea>
+		<div id="buttons">
+			<button id="restyle">apply custom style</button>
+			<button id="restyle-default">default</button>
+			<br>
+			<button id="clear-settings">clear site settings</button>
+			<button id="clear-all">clear all saved settings</button>
+		</div>
 		<script src="popup.js"></script>
 	</body>
 </html>
