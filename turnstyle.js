@@ -53,6 +53,7 @@ function loadSettings() {
 
 /**
  * clearStorage: clear any of the settings saved for this website
+ * @param {Boolean} clearAll: clear all saved settings if set to true
  */
 function clearStorage(clearAll) {
 	if (clearAll) {
@@ -94,9 +95,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		saveStyle(style);
 		sendResponse({message: "restyled"})
 	}
-	else if (request.instruction === "clear storage") {
+	else if (request.instruction === "clear settings") {
 		clearStorage();
-		sendResponse({message: "storage cleared"});
+		sendResponse({message: "settings cleared"});
+	}
+	else if (request.instruction === "clear all") {
+		clearStorage(true);
+		sendResponse({message: "storage cleared"})
 	}
 });
 

@@ -7,7 +7,8 @@
  */
 
 var restyle = document.getElementById("restyle");
-var clearStorage = document.getElementById("clear-storage");
+var clearSettings = document.getElementById("clear-settings");
+var clearAll = document.getElementById("clear-all");
 
 function sendRequest(request, callback) {
 	// find the active tab and open a connection with the content script
@@ -31,9 +32,12 @@ restyle.addEventListener("click", function() {
 	sendRequest("restyle", displayResponse);
 });
 
-clearStorage.addEventListener("click", function() {
-	sendRequest("clear storage", displayResponse);
+clearSettings.addEventListener("click", function() {
+	sendRequest("clear settings", displayResponse);
 });
 
+clearAll.addEventListener("click", function() {
+	sendRequest("clear all", displayResponse);
+});
 
 
