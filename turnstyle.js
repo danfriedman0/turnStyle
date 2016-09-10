@@ -17,7 +17,7 @@ var defaultStyle = "body { margin: 0 auto; max-width: 50em; font-family: 'Roboto
 
 /**
  * restyle: overrides the page's style by inserting the css rules
- * @param {String} styleRules
+ * @param {string} styleRules
  */
 function restyle(styleRules) {
 	if (styleRules) {
@@ -31,8 +31,8 @@ function restyle(styleRules) {
 /**
  * getStyle: get a string of style rules from the styles object in chrome storage
  * 		and call the callback function on the result
- * @param {String} styleName
- * @param {Function} callback
+ * @param {string} styleName
+ * @param {function} callback
  */
 function getStyle(styleName, callback) {
 	chrome.storage.sync.get("styles", function(result) {
@@ -46,8 +46,8 @@ function getStyle(styleName, callback) {
 
 /**
  * saveStyle: save the style in the styles object in storage
- * @param {String} styleName
- * @param {String} styleRules
+ * @param {string} styleName
+ * @param {string} styleRules
  */
 function saveStyle(styleName, styleRules, overWrite) {
 	chrome.storage.sync.get("styles", function(result) {
@@ -61,7 +61,7 @@ function saveStyle(styleName, styleRules, overWrite) {
 
 /**
  * saveSettings: save the settings for this website in chrome storage
- * @param {String} styleName
+ * @param {string} styleName
  */
 function saveSettings(styleName) {
 	var pageUrl = location.origin;
@@ -87,7 +87,7 @@ function loadSettings() {
 
 /**
  * clearStorage: clear any of the settings saved for this website
- * @param {Boolean} clearAll: clear all saved settings if set to true
+ * @param {boolean} clearAll: clear all saved settings if set to true
  */
 function clearStorage(clearAll) {
 	if (clearAll) {
@@ -121,11 +121,19 @@ function getStorageInfo() {
 // listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	if (request.instruction === "restyle") {
-		var styleName = request.styleName ? request.styleName : "default";
-		var styleRules = request.styleRules ? request.styleRules : defaultStyle;
+		console.log(request);
+		var styleRules, styleName;
+		if (request.styleRules) {
+			styleRules = request.styleRules;
+			styleName = request.styleName ? request.styleName : location.origin;
+		}
+		else {
+			styleRules = defaultStyle;
+			styleName = "default";
+		}
 		saveStyle(styleName, styleRules);
-		restyle(styleRules);
 		saveSettings(styleName);
+		restyle(styleRules);
 		sendResponse({message: "restyled"})
 	}
 	else if (request.instruction === "clear settings") {
