@@ -16,14 +16,16 @@ var TSPopup = function() {
 	this.styleDropDown = document.getElementById("style-dropdown");
 	this.message = document.getElementById("message");
 
-	this.addListeners();
+	this.styles = {};
+
+	this.initialize();
 }
 
 TSPopup.prototype.addListeners = function() {
 	var me = this;
 	this.restyle.addEventListener("click", function() {
-		var styleName = me.escapeHtml(styleNameInput.value);
-		var styleRules = me.escapeHtml(styleRulesInput.value);
+		var styleName = me.escapeHtml(me.styleNameInput.value);
+		var styleRules = me.escapeHtml(me.styleRulesInput.value);
 		me.sendRequest({instruction: "restyle", styleName: styleName, styleRules: styleRules});
 	});
 
@@ -39,6 +41,26 @@ TSPopup.prototype.addListeners = function() {
 	this.clearAll.addEventListener("click", function() {
 		me.sendRequest({instruction: "clear all"}, me.displayResponse);
 	});	
+}
+
+TSPopup.prototype.fillDropDown = function() {
+	var styles = this.styles;
+	var dropdown = this.styleDropDown;
+	var option;
+
+	for (var key in styles) {
+		if (styles.hasOwnProperty(key)) {
+			option = document.createElement("option");
+			option.setAttribute("value", key);
+			option.innerHTML = key;
+			dropdown.appendChild(option);
+		}
+	}
+
+	option = document.createElement("option");
+	option.setAttribute("value", "new-style");
+	option.innerHTML = "Write a new style";
+	dropdown.appendChild(option);
 }
 
 /**
@@ -67,23 +89,23 @@ TSPopup.prototype.displayResponse = function(response) {
 		this.message.innerHTML = response.message;
 }
 
-// copied from StackOverflow (http://stackoverflow.com/a/6234804)
+// based on code from StackOverflow (http://stackoverflow.com/a/6234804)
 TSPopup.prototype.escapeHtml = function(unsafe) {
 	return unsafe
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
+		.replace(/>/g, "&gt;");
 }
 
-// function initializePopup() {
-// 	chrome.storage.sync.get("styles", function(result) {
-// 		if (result.styles) {
-// 			fillDropDown(result.styles);
-// 		}
-// 	});
-// }
+TSPopup.prototype.initialize = function() {
+	var me = this;
+	me.addListeners();
+
+	chrome.storage.sync.get("styles", function(result) {
+		me.styles = result.styles ? result.styles : {};
+		me.fillDropDown();
+	});
+}
 
 var popup = new TSPopup();
 
