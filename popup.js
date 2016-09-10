@@ -6,21 +6,47 @@
  * content script.
  */
 
-var restyle = document.getElementById("restyle");
-var restyleDefault = document.getElementById("restyle-default");
-var clearSettings = document.getElementById("clear-settings");
-var clearAll = document.getElementById("clear-all");
-var styleNameInput = document.getElementById("style-name-input");
-var styleRulesInput = document.getElementById("style-rules-input");
-var styleDropDown = document.getElementById("style-dropdown");
+var TSPopup = function() {
+	this.restyle = document.getElementById("restyle");
+	this.restyleDefault = document.getElementById("restyle-default");
+	this.clearSettings = document.getElementById("clear-settings");
+	this.clearAll = document.getElementById("clear-all");
+	this.styleNameInput = document.getElementById("style-name-input");
+	this.styleRulesInput = document.getElementById("style-rules-input");
+	this.styleDropDown = document.getElementById("style-dropdown");
+	this.message = document.getElementById("message");
+
+	this.addListeners();
+}
+
+TSPopup.prototype.addListeners = function() {
+	var me = this;
+	this.restyle.addEventListener("click", function() {
+		var styleName = me.escapeHtml(styleNameInput.value);
+		var styleRules = me.escapeHtml(styleRulesInput.value);
+		me.sendRequest({instruction: "restyle", styleName: styleName, styleRules: styleRules});
+	});
+
+	this.restyleDefault.addEventListener("click", function() {
+		console.log("clicked");
+		me.sendRequest({instruction: "restyle"}, me.displayResponse);
+	});
+
+	this.clearSettings.addEventListener("click", function() {
+		me.sendRequest({instruction: "clear settings"}, me.displayResponse);
+	});
+
+	this.clearAll.addEventListener("click", function() {
+		me.sendRequest({instruction: "clear all"}, me.displayResponse);
+	});	
+}
 
 /**
  * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response
  * @param {object} request
  * @param {function} callback
  */
-function sendRequest(request, callback) {
-	// find the active tab and open a connection with the content script
+TSPopup.prototype.sendRequest = function(request, callback) {
 	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 		chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
 			if (callback)
@@ -34,16 +60,15 @@ function sendRequest(request, callback) {
  *		or if it has a message field
  * @param {(string|object)} response
  */
-function displayResponse(response) {
-	var message = document.getElementById("message");
+TSPopup.prototype.displayResponse = function(response) {
 	if ((typeof response).toLowerCase() === "string")
-		message.innerHTML = response;
+		this.message.innerHTML = response;
 	else if (response && response.message)
-		message.innerHTML = response.message;
+		this.message.innerHTML = response.message;
 }
 
 // copied from StackOverflow (http://stackoverflow.com/a/6234804)
-function escapeHtml(unsafe) {
+TSPopup.prototype.escapeHtml = function(unsafe) {
 	return unsafe
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
@@ -60,25 +85,8 @@ function escapeHtml(unsafe) {
 // 	});
 // }
 
-restyle.addEventListener("click", function() {
-	var styleName = escapeHtml(styleNameInput.value);
-	var styleRules = escapeHtml(styleRulesInput.value);
-	sendRequest({instruction: "restyle", styleName: styleName, styleRules: styleRules});
-});
+var popup = new TSPopup();
 
-restyleDefault.addEventListener("click", function() {
-	sendRequest({instruction: "restyle"}, displayResponse);
-});
-
-clearSettings.addEventListener("click", function() {
-	sendRequest({instruction: "clear settings"}, displayResponse);
-});
-
-clearAll.addEventListener("click", function() {
-	sendRequest({instruction: "clear all"}, displayResponse);
-});
-
-//initializePopup();
 
 
 
