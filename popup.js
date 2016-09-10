@@ -15,6 +15,7 @@ var TSPopup = function() {
 	this.styleRulesInput = document.getElementById("style-rules-input");
 	this.styleDropDown = document.getElementById("style-dropdown");
 	this.message = document.getElementById("message");
+	this.styleEditor = document.getElementById("style-editor");
 
 	this.styles = {};
 
@@ -23,24 +24,33 @@ var TSPopup = function() {
 
 TSPopup.prototype.addListeners = function() {
 	var me = this;
-	this.restyle.addEventListener("click", function() {
+
+	me.restyle.addEventListener("click", function() {
 		var styleName = me.escapeHtml(me.styleNameInput.value);
 		var styleRules = me.escapeHtml(me.styleRulesInput.value);
 		me.sendRequest({instruction: "restyle", styleName: styleName, styleRules: styleRules});
 	});
 
-	this.restyleDefault.addEventListener("click", function() {
+	me.restyleDefault.addEventListener("click", function() {
 		console.log("clicked");
 		me.sendRequest({instruction: "restyle"}, me.displayResponse);
 	});
 
-	this.clearSettings.addEventListener("click", function() {
+	me.clearSettings.addEventListener("click", function() {
 		me.sendRequest({instruction: "clear settings"}, me.displayResponse);
 	});
 
-	this.clearAll.addEventListener("click", function() {
+	me.clearAll.addEventListener("click", function() {
 		me.sendRequest({instruction: "clear all"}, me.displayResponse);
-	});	
+	});
+
+	me.styleDropDown.addEventListener("change", function() {
+		var styleName = this.value;
+		if (styleName)
+			me.openStyleEditor(styleName);
+		else
+			me.styleEditor.style.display = "none";
+	});
 }
 
 TSPopup.prototype.fillDropDown = function() {
@@ -61,6 +71,15 @@ TSPopup.prototype.fillDropDown = function() {
 	option.setAttribute("value", "new-style");
 	option.innerHTML = "Write a new style";
 	dropdown.appendChild(option);
+}
+
+TSPopup.prototype.openStyleEditor = function(styleName) {
+	var styleRules = this.styles[styleName];
+	if (!styleRules)
+		styleName = styleRules = "";
+	this.styleNameInput.innerHTML = styleName;
+	this.styleRulesInput.innerHTML = styleRules;		
+	this.styleEditor.style.display = "block";
 }
 
 /**
@@ -98,6 +117,7 @@ TSPopup.prototype.escapeHtml = function(unsafe) {
 }
 
 TSPopup.prototype.initialize = function() {
+	var pageUrl = location.origin;
 	var me = this;
 	me.addListeners();
 

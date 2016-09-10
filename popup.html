@@ -19,24 +19,34 @@
 				justify-content: space-between;
 				align-items: center;
 			}
+			#style-editor {
+				display: none;
+			}
+			#buttons {
+				text-align: center;
+			}
 		</style>
 	</head>
 	<body>
 		<h4>turnStyle</h4>
 		<div class="flexbox">
-			<p id="message">Add a style to this site: </p>
+			<p id="message">Add a style: </p>
 			<select id="style-dropdown">
 				<option value=""></option>
 			</select>
 		</div>
-		<textarea id="style-name-input" rows="1" cols="42" placeholder="Style name"></textarea>
-		<textarea id="style-rules-input" rows="10" cols="42" placeholder="Style rules"></textarea>
-		<div id="buttons">
-			<button id="restyle">apply custom style</button>
+		<div id="style-editor">
+			<textarea id="style-name-input" rows="1" cols="42" placeholder="Style name"></textarea>
+			<textarea id="style-rules-input" rows="10" cols="42" placeholder="Style rules"></textarea>
+			<div id="buttons">
+				<button id="restyle">save</button>
+			</div>
+		</div>
+		<hr>
+		<div id="dev-buttons">
 			<button id="restyle-default">default</button>
-			<br>
 			<button id="clear-settings">clear site settings</button>
-			<button id="clear-all">clear all saved settings</button>
+			<button id="clear-all">clear all settings</button>
 		</div>
 		<script src="popup.js"></script>
 	</body>
