@@ -30,14 +30,10 @@ function restyle(style) {
  * @param {String} style: CSS rules
  */
 function saveStyle(style) {
-	chrome.storage.sync.get("turnStyle", function(obj) {
-		var turnStyle = obj.turnStyle ? obj.turnStyle : {};
-		var pageUrl = location.origin;
-		turnStyle[pageUrl] = style;
-		chrome.storage.sync.set({"turnStyle": turnStyle});
-	});
-
-	getStorageInfo();
+	var pageUrl = location.origin;
+	var settings = {};
+	settings[pageUrl] = style;
+	chrome.storage.sync.set(settings);
 }
 
 /**
@@ -45,36 +41,33 @@ function saveStyle(style) {
  * page and send a message to the popup script to change the popup text
  */
 function loadSettings() {
-	chrome.storage.sync.get("turnStyle", function(obj) {
-		if (obj && obj.turnStyle) {
-			var pageUrl = location.origin;
-			var style = obj ? obj.turnStyle[pageUrl] : null;
-			if (style) {
-				restyle(style);
-			}
+	var pageUrl = location.origin;
+	chrome.storage.sync.get(pageUrl, function(obj) {
+		if (obj && obj[pageUrl]) {
+			restyle(obj[pageUrl])
 		}
 	});
+
+	getStorageInfo();
 }
 
 /**
- * clearStorage: clear any of the settings saved for this website and reload the page
- * @param {Boolean} clearAll: the function will clear all turnStyle settings if clearAll == True
+ * clearStorage: clear any of the settings saved for this website
  */
 function clearStorage(clearAll) {
 	if (clearAll) {
-		chrome.storage.sync.remove("turnStyle");	
-	}
-	else {
-		var pageUrl = location.origin;
-		chrome.storage.sync.get("turnStyle", function(obj) {
-			var turnStyle = obj ? obj.turnStyle : null;
-			if (turnStyle) {
-				var pageUrl = location.origin;
-				delete turnStyle[pageUrl];
-				chrome.storage.sync.set({"turnStyle": turnStyle});
+		chrome.storage.sync.get(null, function(obj) {
+			for (var key in obj) {
+				if (obj.hasOwnProperty(key))
+					chrome.storage.sync.remove(key);
 			}
 		});
 	}
+	else {
+		var pageUrl = location.origin;
+		chrome.storage.sync.remove(pageUrl);
+	}
+
 	var styleNodes = document.getElementsByClassName("turnstyle");
 	while (styleNodes.length > 0) {
 		styleNodes[0].parentNode.removeChild(styleNodes[0]);
@@ -85,9 +78,11 @@ function getStorageInfo() {
 	chrome.storage.sync.getBytesInUse("turnStyle", function(bytes) {
 		console.log(bytes + " bytes in use");
 	});
-
 	chrome.storage.sync.get(null, function(storage) {
-		console.log("storage contains: " + storage);
+		for (var key in storage) {
+			if (storage.hasOwnProperty(key))
+				console.log(key + " -> " + storage[key]);
+		}
 	});
 }
 
