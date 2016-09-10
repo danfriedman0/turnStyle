@@ -12,6 +12,7 @@ var clearSettings = document.getElementById("clear-settings");
 var clearAll = document.getElementById("clear-all");
 var styleNameInput = document.getElementById("style-name-input");
 var styleRulesInput = document.getElementById("style-rules-input");
+var styleDropDown = document.getElementById("style-dropdown");
 
 /**
  * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response
@@ -49,7 +50,15 @@ function escapeHtml(unsafe) {
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;")
 		.replace(/'/g, "&#039;");
- }
+}
+
+// function initializePopup() {
+// 	chrome.storage.sync.get("styles", function(result) {
+// 		if (result.styles) {
+// 			fillDropDown(result.styles);
+// 		}
+// 	});
+// }
 
 restyle.addEventListener("click", function() {
 	var styleName = escapeHtml(styleNameInput.value);
@@ -68,6 +77,8 @@ clearSettings.addEventListener("click", function() {
 clearAll.addEventListener("click", function() {
 	sendRequest({instruction: "clear all"}, displayResponse);
 });
+
+//initializePopup();
 
 
 
