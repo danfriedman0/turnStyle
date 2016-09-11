@@ -73,24 +73,35 @@ TSPopup.prototype.addListeners = function() {
 	});
 }
 
+TSPopup.prototype.addOption = function(value, text) {
+	var option = document.createElement("option");
+	option.value = value;
+	option.innerHTML = text;
+	this.styleDropDown.appendChild(option);
+}
+
 TSPopup.prototype.fillDropDown = function() {
 	var styles = this.styles;
-	var dropdown = this.styleDropDown;
-	var option;
+	var me = this;
 
 	for (var key in styles) {
 		if (styles.hasOwnProperty(key)) {
-			option = document.createElement("option");
-			option.value = key;
-			option.innerHTML = key;
-			dropdown.appendChild(option);
+			me.addOption(key, key);
 		}
 	}
 
-	option = document.createElement("option");
-	option.setAttribute("value", "new-style");
-	option.innerHTML = "Write a new style";
-	dropdown.appendChild(option);
+	me.addOption("new-style", "Write a new style");
+}
+
+TSPopup.prototype.editStyle = function(styleName) {
+	this.openStyleEditor(styleName);
+}
+
+TSPopup.prototype.removeStyle = function(styleNode, styleName) {
+	var styleId = styleName.replace(/ /g, "-");
+	this.sendRequest({instruction: "removeStyle", styleId: styleId, styleName: styleName, delete: true});
+	styleNode.parentNode.removeChild(styleNode);
+	this.addOption(styleName, styleName);
 }
 
 /**
@@ -98,12 +109,22 @@ TSPopup.prototype.fillDropDown = function() {
  *	the style's name from the drop down
  */
 TSPopup.prototype.addStyleToList = function(styleName) {
-	// clone the page-style template, modify it, and add it to the page
+	var me = this;
+	// clone the page-style template
 	var styleList = document.getElementById("style-list");
 	var pageStyleTemplate = styleList.getElementsByClassName("page-style template")[0];
 	var newStyle = pageStyleTemplate.cloneNode(true);
+
+	// modify and add event listeners
 	newStyle.classList.remove("template");
 	newStyle.getElementsByClassName("style-name")[0].innerHTML = styleName;
+	newStyle.getElementsByClassName("edit-style")[0].addEventListener("click", function() {
+		me.editStyle(styleName);
+	});
+	newStyle.getElementsByClassName("remove-style")[0].addEventListener("click", function() {
+		me.removeStyle(newStyle, styleName);
+	});
+
 	styleList.insertBefore(newStyle, pageStyleTemplate);
 
 	// remove name from dropdown

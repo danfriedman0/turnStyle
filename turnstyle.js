@@ -40,7 +40,7 @@ TurnStyle.prototype.loadPageSettings = function() {
 			result[pageUrl].forEach(function(styleName) {
 				var styleRules = me.styles[styleName];
 				if (styleRules)
-					me.insertStyle(styleRules);
+					me.insertStyle(styleRules, styleName.replace(/ /g, "-"));
 			});
 		}
 	});
@@ -49,14 +49,14 @@ TurnStyle.prototype.loadPageSettings = function() {
 /**
  * insertStyle: override the page's style by inserting the css rules with optional class name and id
  */
-TurnStyle.prototype.insertStyle = function(styleRules, className, id) {
+TurnStyle.prototype.insertStyle = function(styleRules, styleId, className) {
 	if (styleRules) {
 		var node = document.createElement("style");
 		node.setAttribute("class", "turnstyle");
 		if (className)
 			node.classList.add(className);
-		if (id)
-			node.setAttribute("id", id);
+		if (styleId)
+			node.setAttribute("id", styleId);
 		node.innerHTML = styleRules;
 		document.head.appendChild(node);		
 	}
@@ -81,6 +81,30 @@ TurnStyle.prototype.removeStyle = function(styleId, className) {
 	}
 }
 
+/**
+ * setStyle: save the style for this website in chrome storage
+ */
+TurnStyle.prototype.setStyle = function(styleName) {
+	var pageUrl = this.pageUrl;
+	if (pageUrl !== "styles") {			// make sure we don't overwrite the styles field
+		var pageEntry = {};
+		this.pageSettings.push(styleName);
+		pageEntry[pageUrl] = this.pageSettings;
+		chrome.storage.sync.set(pageEntry);
+	}
+}
+
+TurnStyle.prototype.unsetStyle = function(styleName) {
+	var pageUrl = this.pageUrl;
+	var index = this.pageSettings.indexOf(styleName);
+	if (index > -1) {
+		var pageEntry = {};
+		this.pageSettings.splice(index, 1);
+		pageEntry[pageUrl] = this.pageSettings;
+		chrome.storage.sync.set(pageEntry);
+	}
+}	
+
 
 /**
  * saveStyle: save the style in the styles object in storage
@@ -91,19 +115,6 @@ TurnStyle.prototype.saveStyle = function(styleName, styleRules, overWrite) {
 	if (overWrite || !styles[styleName]) {
 		styles[styleName] = styleRules;
 		chrome.storage.sync.set({"styles": styles});
-	}
-}
-
-/**
- * saveSettings: save the settings for this website in chrome storage
- */
-TurnStyle.prototype.saveSettings = function(styleName) {
-	var pageUrl = this.pageUrl;
-	if (pageUrl !== "styles") {			// make sure we don't overwrite the styles field
-		var pageEntry = {};
-		this.pageSettings.push(styleName);
-		pageEntry[pageUrl] = this.pageSettings;
-		chrome.storage.sync.set(pageEntry);
 	}
 }
 
@@ -141,7 +152,6 @@ TurnStyle.prototype.addListener = function() {
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		if (request.instruction === "getPageSettings") {
-			console.log("requested page settings");
 			sendResponse({pageUrl: me.pageUrl, pageSettings: me.pageSettings, styles: me.styles});
 		}
 
@@ -153,7 +163,7 @@ TurnStyle.prototype.addListener = function() {
 			if (styleId === "ts-preview")
 				me.removeStyle("ts-preview");
 
-			me.insertStyle(styleRules, className, styleId);
+			me.insertStyle(styleRules, styleId, className);
 			sendResponse({message: "inserted style"});
 		}
 
@@ -161,6 +171,8 @@ TurnStyle.prototype.addListener = function() {
 			var styleId = request.styleId ? request.styleId : null;
 			var className = request.className ? request.className : null;
 			me.removeStyle(styleId, className);
+			if (request.delete)
+				me.unsetStyle(request.styleName);
 			sendResponse({message: "removed style"});
 		}
 
@@ -168,7 +180,7 @@ TurnStyle.prototype.addListener = function() {
 			if (request.styleRules && request.styleName) {
 				me.insertStyle(request.styleRules);
 				me.saveStyle(request.styleName, request.styleRules);
-				me.saveSettings(request.styleName);
+				me.setStyle(request.styleName);
 				sendResponse({message: "restyled"});				
 			}
 		}
@@ -190,7 +202,6 @@ TurnStyle.prototype.initialize = function() {
 	this.loadStyles();
 	this.loadPageSettings();
 	this.addListener();
-	console.log(this);
 }
 
 var turnStyle = new TurnStyle();
