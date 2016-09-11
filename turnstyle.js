@@ -140,7 +140,12 @@ TurnStyle.prototype.addListener = function() {
 	var me = this;
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-		if (request.instruction === "insertStyle") {
+		if (request.instruction === "getPageSettings") {
+			console.log("requested page settings");
+			sendResponse({pageUrl: me.pageUrl, pageSettings: me.pageSettings, styles: me.styles});
+		}
+
+		else if (request.instruction === "insertStyle") {
 			var styleRules = request.styleRules ? request.styleRules : "";
 			var styleId = request.styleId ? request.styleId : "";
 			var className = request.className ? request.className : "";
