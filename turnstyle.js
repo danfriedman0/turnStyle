@@ -16,23 +16,43 @@ var defaultStyle = "body { margin: 0 auto; max-width: 50em; font-family: 'Roboto
 
 
 /**
- * restyle: override the page's style by inserting the css rules
- * @param {string} styleRules
+ * insertStyle: override the page's style by inserting the css rules with optional class name and id
  */
-function insertStyle(styleRules) {
+function insertStyle(styleRules, className, id) {
 	if (styleRules) {
 		var node = document.createElement("style");
 		node.setAttribute("class", "turnstyle");
+		if (className)
+			node.classList.add(className);
+		if (id)
+			node.setAttribute("id", id);
 		node.innerHTML = styleRules;
 		document.head.appendChild(node);		
 	}
 }
 
 /**
+ * removeStyle: remove all styles with the specified id or class name
+ *	if no arguments are passed, remove all style elements with the "turnstyle" class
+ */
+function removeStyle(styleId, className) {
+	if (styleId) {
+		var styleNode = document.getElementById(styleId);
+		if (styleNode)
+			styleNode.parentNode.removeChild(styleNode);
+	}
+	else {
+		className = className ? className : "turnstyle";
+		var styleNodes = document.getElementsByClassName(className);
+		while (styleNodes.length > 0) {
+			styleNodes[0].parentNode.removeChild(styleNodes[0]);
+		}
+	}
+}
+
+/**
  * getStyle: get a string of style rules from the styles object in chrome storage
- * 		and call the callback function on the result
- * @param {string} styleName
- * @param {function} callback
+ * 	and call the callback function on the result
  */
 function getStyle(styleName, callback) {
 	chrome.storage.sync.get("styles", function(result) {
@@ -46,8 +66,7 @@ function getStyle(styleName, callback) {
 
 /**
  * saveStyle: save the style in the styles object in storage
- * @param {string} styleName
- * @param {string} styleRules
+ *	overwrite the existing style if overwrite is set to true
  */
 function saveStyle(styleName, styleRules, overWrite) {
 	chrome.storage.sync.get("styles", function(result) {
@@ -61,7 +80,6 @@ function saveStyle(styleName, styleRules, overWrite) {
 
 /**
  * saveSettings: save the settings for this website in chrome storage
- * @param {string} styleName
  */
 function saveSettings(styleName) {
 	var pageUrl = location.origin;
@@ -84,7 +102,6 @@ function loadSettings() {
 	var pageUrl = location.origin;
 	chrome.storage.sync.get(pageUrl, function(result) {
 		if (result[pageUrl]) {
-			// the styles should be saved as an array, so call getStyle/insertStyle on each one
 			result[pageUrl].forEach(function(styleRules) {
 				getStyle(styleRules, insertStyle);
 			});
@@ -94,7 +111,6 @@ function loadSettings() {
 
 /**
  * clearStorage: clear any of the settings saved for this website
- * @param {boolean} clearAll: clear all saved settings if set to true
  */
 function clearStorage(clearAll) {
 	if (clearAll) {
@@ -110,10 +126,7 @@ function clearStorage(clearAll) {
 		chrome.storage.sync.remove(pageUrl);
 	}
 
-	var styleNodes = document.getElementsByClassName("turnstyle");
-	while (styleNodes.length > 0) {
-		styleNodes[0].parentNode.removeChild(styleNodes[0]);
-	}
+	removeStyle();
 }
 
 function getStorageInfo() {
@@ -127,9 +140,26 @@ function getStorageInfo() {
 
 // listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-	if (request.instruction === "restyle") {
-		styleRules = request.styleRules ? request.styleRules : defaultStyle;
-		styleName = request.styleName ? request.styleName : "default";
+	if (request.instruction === "insertStyle") {
+		var styleRules = request.styleRules ? request.styleRules : "";
+		var styleId = request.styleId ? request.styleId : "";
+		var className = request.className ? request.className : "";
+
+		if (styleId === "ts-preview")
+			removeStyle("ts-preview");
+
+		insertStyle(styleRules, className, styleId);
+		sendResponse({message: "inserted style"});
+	}
+	else if (request.instruction === "removeStyle") {
+		var styleId = request.styleId ? request.styleId : null;
+		var className = request.className ? request.className : null;
+		removeStyle(styleId, className);
+		sendResponse({message: "removed style"});
+	}
+	else if (request.instruction === "restyle") {
+		var styleRules = request.styleRules ? request.styleRules : defaultStyle;
+		var styleName = request.styleName ? request.styleName : "default";
 		
 		insertStyle(styleRules);
 		saveStyle(styleName, styleRules);

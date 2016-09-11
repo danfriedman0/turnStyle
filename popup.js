@@ -2,13 +2,14 @@
  * popup.js
  * Dan Friedman
  *
- * This file controls the popup and relays messages between the popup and turnstyle.js, the
- * content script.
+ * This file controls the popup and relays messages between the popup and the content script (turnstyle.js)
  */
 
 var TSPopup = function() {
-	this.restyle = document.getElementById("restyle");
-	this.restyleDefault = document.getElementById("restyle-default");
+	this.previewStyle = document.getElementById("preview-style");
+	this.clearStyle = document.getElementById("clear-style");
+	this.saveStyle = document.getElementById("save-style");
+	this.addStyle = document.getElementById("add-style");
 	this.clearSettings = document.getElementById("clear-settings");
 	this.clearAll = document.getElementById("clear-all");
 	this.styleNameInput = document.getElementById("style-name-input");
@@ -25,15 +26,32 @@ var TSPopup = function() {
 TSPopup.prototype.addListeners = function() {
 	var me = this;
 
-	me.restyle.addEventListener("click", function() {
+	me.previewStyle.addEventListener("click", function() {
+		if (me.styleRulesInput.value) {
+			var styleRules = me.escapeHtml(me.styleRulesInput.value);
+			me.sendRequest({
+				instruction: "insertStyle",
+				styleRules: styleRules,
+				styleId: "ts-preview"
+			});	
+			me.clearStyle.disabled = false;	
+		}
+	});
+
+	me.clearStyle.addEventListener("click", function() {
+		me.sendRequest({
+			instruction: "removeStyle",
+			styleId: "ts-preview"
+		});
+		this.disabled = true;
+	})
+
+	me.addStyle.addEventListener("click", function() {
 		var styleName = me.escapeHtml(me.styleNameInput.value);
 		var styleRules = me.escapeHtml(me.styleRulesInput.value);
 		me.sendRequest({instruction: "restyle", styleName: styleName, styleRules: styleRules});
-	});
-
-	me.restyleDefault.addEventListener("click", function() {
-		console.log("clicked");
-		me.sendRequest({instruction: "restyle"}, me.displayResponse);
+		me.addStyleToList(styleName);
+		me.styleEditor.style.display = "none";
 	});
 
 	me.clearSettings.addEventListener("click", function() {
@@ -61,7 +79,7 @@ TSPopup.prototype.fillDropDown = function() {
 	for (var key in styles) {
 		if (styles.hasOwnProperty(key)) {
 			option = document.createElement("option");
-			option.setAttribute("value", key);
+			option.value = key;
 			option.innerHTML = key;
 			dropdown.appendChild(option);
 		}
@@ -71,6 +89,24 @@ TSPopup.prototype.fillDropDown = function() {
 	option.setAttribute("value", "new-style");
 	option.innerHTML = "Write a new style";
 	dropdown.appendChild(option);
+}
+
+/**
+ * addStyleToList: add a style to the list of the active styles on this page and remove
+ *	the style's name from the drop down
+ */
+TSPopup.prototype.addStyleToList = function(styleName) {
+	// clone the page-style template, modify it, and add it to the page
+	var styleList = document.getElementById("style-list");
+	var pageStyleTemplate = styleList.getElementsByClassName("page-style template")[0];
+	var newStyle = pageStyleTemplate.cloneNode(true);
+	newStyle.classList.remove("template");
+	newStyle.getElementsByClassName("style-name")[0].innerHTML = styleName;
+	styleList.insertBefore(newStyle, pageStyleTemplate);
+
+	// remove name from dropdown
+	var option = this.styleDropDown.querySelector("option[value='" + styleName + "']");
+	option.parentNode.removeChild(option);
 }
 
 TSPopup.prototype.openStyleEditor = function(styleName) {
@@ -84,8 +120,6 @@ TSPopup.prototype.openStyleEditor = function(styleName) {
 
 /**
  * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response
- * @param {object} request
- * @param {function} callback
  */
 TSPopup.prototype.sendRequest = function(request, callback) {
 	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -99,7 +133,6 @@ TSPopup.prototype.sendRequest = function(request, callback) {
 /**
  * displayReponse: displays a response in the message field of the popup if the response is a string
  *		or if it has a message field
- * @param {(string|object)} response
  */
 TSPopup.prototype.displayResponse = function(response) {
 	if ((typeof response).toLowerCase() === "string")
@@ -117,7 +150,6 @@ TSPopup.prototype.escapeHtml = function(unsafe) {
 }
 
 TSPopup.prototype.initialize = function() {
-	var pageUrl = location.origin;
 	var me = this;
 	me.addListeners();
 
@@ -125,6 +157,7 @@ TSPopup.prototype.initialize = function() {
 		me.styles = result.styles ? result.styles : {};
 		me.fillDropDown();
 	});
+
 }
 
 var popup = new TSPopup();
