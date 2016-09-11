@@ -18,6 +18,8 @@ var TSPopup = function() {
 	this.message = document.getElementById("message");
 	this.styleEditor = document.getElementById("style-editor");
 
+	this.pageUrl = "";
+	this.pageSettings = [];
 	this.styles = {};
 
 	this.initialize();
@@ -55,11 +57,11 @@ TSPopup.prototype.addListeners = function() {
 	});
 
 	me.clearSettings.addEventListener("click", function() {
-		me.sendRequest({instruction: "clear settings"}, me.displayResponse);
+		me.sendRequest({instruction: "clear settings"});
 	});
 
 	me.clearAll.addEventListener("click", function() {
-		me.sendRequest({instruction: "clear all"}, me.displayResponse);
+		me.sendRequest({instruction: "clear all"});
 	});
 
 	me.styleDropDown.addEventListener("change", function() {
@@ -119,13 +121,14 @@ TSPopup.prototype.openStyleEditor = function(styleName) {
 }
 
 /**
- * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response
+ * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response,
+ *	bound to the specified context
  */
-TSPopup.prototype.sendRequest = function(request, callback) {
+TSPopup.prototype.sendRequest = function(request, callback, context) {
 	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 		chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
-			if (callback)
-				callback(response);
+			if (callback && context)
+				callback.bind(context, response)();
 		});
 	});	
 }
@@ -149,15 +152,27 @@ TSPopup.prototype.escapeHtml = function(unsafe) {
 		.replace(/>/g, "&gt;");
 }
 
+TSPopup.prototype.loadSettings = function(settings) {
+	var me = this;
+
+	me.pageUrl = settings.pageUrl ? settings.pageUrl : "";
+	me.pageSettings = settings.pageSettings ? settings.pageSettings : [];
+	me.styles = settings.styles ? settings.styles : {};
+
+	document.getElementById("page-url").innerHTML = me.pageUrl;
+
+	me.fillDropDown();
+	if (me.pageSettings) {
+		me.pageSettings.forEach(function(styleName) {
+			me.addStyleToList(styleName);
+		});
+	}
+}
+
 TSPopup.prototype.initialize = function() {
 	var me = this;
 	me.addListeners();
-
-	chrome.storage.sync.get("styles", function(result) {
-		me.styles = result.styles ? result.styles : {};
-		me.fillDropDown();
-	});
-
+	me.sendRequest({instruction: "getPageSettings"}, me.loadSettings, me);
 }
 
 var popup = new TSPopup();
