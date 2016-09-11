@@ -16,10 +16,10 @@ var defaultStyle = "body { margin: 0 auto; max-width: 50em; font-family: 'Roboto
 
 
 /**
- * restyle: overrides the page's style by inserting the css rules
+ * restyle: override the page's style by inserting the css rules
  * @param {string} styleRules
  */
-function restyle(styleRules) {
+function insertStyle(styleRules) {
 	if (styleRules) {
 		var node = document.createElement("style");
 		node.setAttribute("class", "turnstyle");
@@ -66,21 +66,28 @@ function saveStyle(styleName, styleRules, overWrite) {
 function saveSettings(styleName) {
 	var pageUrl = location.origin;
 	if (pageUrl !== "styles") {			// make sure we don't overwrite the styles field
-		var settings = {};
-		settings[pageUrl] = styleName;
-		chrome.storage.sync.set(settings);		
+		chrome.storage.sync.get(pageUrl, function(result) {
+			var pageStyles = result[pageUrl] ? result[pageUrl] : [];
+			var pageEntry = {};
+			pageStyles.push(styleName);
+			pageEntry[pageUrl] = pageStyles;
+			chrome.storage.sync.set(pageEntry);
+			getStorageInfo();
+		});
 	}
 }
 
 /**
- * loadSettings: look for saved settings in chrome.storage; if there are any, restyle the
- * 		page and send a message to the popup script to change the popup text
+ * loadSettings: look for saved styles in chrome.storage and restyle the page if there are any
  */
 function loadSettings() {
 	var pageUrl = location.origin;
 	chrome.storage.sync.get(pageUrl, function(result) {
 		if (result[pageUrl]) {
-			getStyle(result[pageUrl], restyle);
+			// the styles should be saved as an array, so call getStyle/insertStyle on each one
+			result[pageUrl].forEach(function(styleRules) {
+				getStyle(styleRules, insertStyle);
+			});
 		}
 	});
 }
@@ -121,18 +128,12 @@ function getStorageInfo() {
 // listen for messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	if (request.instruction === "restyle") {
-		var styleRules, styleName;
-		if (request.styleRules) {
-			styleRules = request.styleRules;
-			styleName = request.styleName ? request.styleName : location.origin;
-		}
-		else {
-			styleRules = defaultStyle;
-			styleName = "default";
-		}
+		styleRules = request.styleRules ? request.styleRules : defaultStyle;
+		styleName = request.styleName ? request.styleName : "default";
+		
+		insertStyle(styleRules);
 		saveStyle(styleName, styleRules);
 		saveSettings(styleName);
-		restyle(styleRules);
 		sendResponse({message: "restyled"})
 	}
 	else if (request.instruction === "clear settings") {
