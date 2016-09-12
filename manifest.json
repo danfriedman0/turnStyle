@@ -18,7 +18,8 @@
 	"content_scripts": [
 		{
 			"matches": ["http://*/*"],
-			"js": ["turnstyle.js"]
+			"js": ["turnstyle.js"],
+			"run_at": "document_start"
 		}
 	],
 	"web_accessible_resources": [
