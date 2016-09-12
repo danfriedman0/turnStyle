@@ -28,7 +28,6 @@ strong {
 code,
 pre {
 	background: #f5f7f9;
-	border-bottom: 1px solid #d8dee9;
 }
 
 code {
@@ -38,5 +37,6 @@ code {
 
 pre {
 	padding: 1em;
+	border: 1px solid #d8dee9;
 	border-left: 2px solid #69c;
 }
