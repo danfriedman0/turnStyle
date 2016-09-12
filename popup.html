@@ -14,9 +14,14 @@
 				font-size: .8em;
     		text-align: left;
 			}
+			#error-message {
+				font-size: .7em;
+				color: #f00;
+				margin-bottom: 4px;
+			}
 			ul {
 				list-style: none;
-				padding: 10px;
+				padding: 0 10px;
 				margin: 0;
 			}
 			.style-name {
@@ -30,6 +35,10 @@
 			.template {
 				display: none;
 			}
+			#close-button {
+				text-align: right;
+				margin-bottom: 4px;
+			}
 			#style-editor {
 				display: none;
 			}
@@ -41,7 +50,8 @@
 	</head>
 	<body>
 		<h4>turnStyle</h4>
-		<p id="page-styles">Active styles for <a href="#" id="page-url">this site</a></p>
+		<hr>
+		<p id="page-styles">Active styles for <a href="#" id="page-url">this site</a> :</p>
 		<ul id="style-list">
 			<li class="page-style flexbox template">
 				<span class="style-name"></span>
@@ -51,13 +61,18 @@
 				</div>
 			</li>
 		</ul>
-		<div class="flexbox">
+		<hr>
+		<div id="style-selector" class="flexbox">
 			<p id="message">Add a style: </p>
 			<select id="style-dropdown">
 				<option value=""></option>
+				<option value="new-style">Write a new style</option>
 			</select>
 		</div>
 		<div id="style-editor">
+			<div id="close-button">
+				<button id="close-editor">close style editor</button>
+			</div>
 			<textarea id="style-name-input" rows="1" cols="44" placeholder="Style name"></textarea>
 			<textarea id="style-rules-input" rows="10" cols="44" placeholder="Style rules"></textarea>
 			<div id="buttons" class="flexbox">
@@ -66,8 +81,7 @@
 					<button id="clear-style" disabled>clear</button>
 				</div>
 				<div>
-					<button id="add-style">add to site</button>
-					<button id="save-style" disabled>save</button>
+					<button id="save-style">save</button>
 				</div>
 			</div>
 		</div>

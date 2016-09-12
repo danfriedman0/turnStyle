@@ -40,16 +40,16 @@ TurnStyle.prototype.loadPageSettings = function() {
 			result[pageUrl].forEach(function(styleName) {
 				var styleRules = me.styles[styleName];
 				if (styleRules)
-					me.insertStyle(styleRules, styleName.replace(/ /g, "-"));
+					me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
 			});
 		}
 	});
 }
 
 /**
- * insertStyle: override the page's style by inserting the css rules with optional class name and id
+ * addStyleToPage: override the page's style by inserting the css rules with optional class name and id
  */
-TurnStyle.prototype.insertStyle = function(styleRules, styleId, className) {
+TurnStyle.prototype.addStyleToPage = function(styleRules, styleId, className) {
 	if (styleRules) {
 		var node = document.createElement("style");
 		node.setAttribute("class", "turnstyle");
@@ -63,10 +63,10 @@ TurnStyle.prototype.insertStyle = function(styleRules, styleId, className) {
 }
 
 /**
- * removeStyle: remove all styles with the specified id or class name
+ * removeStyleFromPage: remove all styles with the specified id or class name
  *	if no arguments are passed, remove all style elements with the "turnstyle" class
  */
-TurnStyle.prototype.removeStyle = function(styleId, className) {
+TurnStyle.prototype.removeStyleFromPage = function(styleId, className) {
 	if (styleId) {
 		var styleNode = document.getElementById(styleId);
 		if (styleNode)
@@ -82,9 +82,9 @@ TurnStyle.prototype.removeStyle = function(styleId, className) {
 }
 
 /**
- * setStyle: save the style for this website in chrome storage
+ * setPageStyle: save the style for this website in chrome storage
  */
-TurnStyle.prototype.setStyle = function(styleName) {
+TurnStyle.prototype.setPageStyle = function(styleName) {
 	var pageUrl = this.pageUrl;
 	if (pageUrl !== "styles") {			// make sure we don't overwrite the styles field
 		var pageEntry = {};
@@ -94,7 +94,7 @@ TurnStyle.prototype.setStyle = function(styleName) {
 	}
 }
 
-TurnStyle.prototype.unsetStyle = function(styleName) {
+TurnStyle.prototype.unsetPageStyle = function(styleName) {
 	var pageUrl = this.pageUrl;
 	var index = this.pageSettings.indexOf(styleName);
 	if (index > -1) {
@@ -118,6 +118,13 @@ TurnStyle.prototype.saveStyle = function(styleName, styleRules, overWrite) {
 	}
 }
 
+TurnStyle.prototype.editStyle = function(styleName, styleRules) {
+	var styleId = styleName.replace(/ /g, "-");
+	this.removeStyleFromPage(styleId);
+	this.addStyleToPage(styleRules, styleId);
+	this.saveStyle(styleName, styleRules, true);
+}
+
 /**
  * clearStorage: clear any of the settings saved for this website
  */
@@ -134,7 +141,7 @@ TurnStyle.prototype.clearStorage = function(clearAll) {
 		chrome.storage.sync.remove(this.pageUrl);
 	}
 
-	this.removeStyle();
+	this.removeStyleFromPage();
 }
 
 TurnStyle.prototype.getStorageInfo = function() {
@@ -161,38 +168,35 @@ TurnStyle.prototype.addListener = function() {
 			var className = request.className ? request.className : "";
 
 			if (styleId === "ts-preview")
-				me.removeStyle("ts-preview");
+				me.removeStyleFromPage("ts-preview");
 
-			me.insertStyle(styleRules, styleId, className);
-			sendResponse({message: "inserted style"});
+			me.addStyleToPage(styleRules, styleId, className);
 		}
 
 		else if (request.instruction === "removeStyle") {
-			var styleId = request.styleId ? request.styleId : null;
-			var className = request.className ? request.className : null;
-			me.removeStyle(styleId, className);
+			me.removeStyleFromPage(request.styleId, request.className);
 			if (request.delete)
-				me.unsetStyle(request.styleName);
-			sendResponse({message: "removed style"});
+				me.unsetPageStyle(request.styleName);
 		}
 
-		else if (request.instruction === "restyle") {
+		else if (request.instruction === "saveStyle") {
 			if (request.styleRules && request.styleName) {
-				me.insertStyle(request.styleRules);
+				me.addStyleToPage(request.styleRules, request.styleName.replace(/ /g, "-"));
 				me.saveStyle(request.styleName, request.styleRules);
-				me.setStyle(request.styleName);
-				sendResponse({message: "restyled"});				
+				me.setPageStyle(request.styleName);
 			}
+		}
+
+		else if (request.instruction === "editStyle") {
+			me.editStyle(request.styleName, request.styleRules);
 		}
 
 		else if (request.instruction === "clear settings") {
 			me.clearStorage();
-			sendResponse({message: "settings cleared"});
 		}
 
 		else if (request.instruction === "clear all") {
 			me.clearStorage(true);
-			sendResponse({message: "storage cleared"})
 		}
 	});	
 }
