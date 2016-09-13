@@ -14,6 +14,12 @@
 				font-size: .8em;
     		text-align: left;
 			}
+			label {
+				margin-right: 15px;
+			}
+			.small-text {
+				font-size: .7em;
+			}
 			#error-message {
 				font-size: .7em;
 				color: #f00;
@@ -30,6 +36,8 @@
 			.flexbox {
 				display: flex;
 				justify-content: space-between;
+			}
+			#style-selector {
 				align-items: center;
 			}
 			.template {
@@ -46,12 +54,31 @@
 				font-style: italic;
 				font-weight: bold;
 			}
+			#page-url-input {
+				display: none;
+			}
+			.fixed-height {
+				height: 1.5em;
+			}
 		</style>
 	</head>
 	<body>
 		<h4>turnStyle</h4>
+		
 		<hr>
-		<p id="page-styles">Active styles for <a href="#" id="page-url">this site</a> :</p>
+		
+		<div class="fixed-height">
+			<a href="#" id="page-url-display">this site</a>
+			<textarea id="page-url-input" rows="1" cols="44"></textarea>
+		</div>
+		<div>
+			<button id="edit-url">edit URL</button>
+			<button id="save-url" disabled>save URL</button>
+		</div>
+		
+		<hr>
+		
+		<p id="page-styles">Active styles on this page:</p>
 		<ul id="style-list">
 			<li class="page-style flexbox template">
 				<span class="style-name"></span>
@@ -61,7 +88,9 @@
 				</div>
 			</li>
 		</ul>
+		
 		<hr>
+		
 		<div id="style-selector" class="flexbox">
 			<p id="message">Add a style: </p>
 			<select id="style-dropdown">
@@ -69,6 +98,7 @@
 				<option value="new-style">Write a new style</option>
 			</select>
 		</div>
+		
 		<div id="style-editor">
 			<div id="close-button">
 				<button id="close-editor">close style editor</button>
@@ -85,12 +115,15 @@
 				</div>
 			</div>
 		</div>
+		
 		<hr>
+		
 		<div id="dev-buttons">
 			<button id="restyle-default">default</button>
 			<button id="clear-settings">clear site settings</button>
 			<button id="clear-all">clear all settings</button>
 		</div>
+
 		<script src="popup.js"></script>
 	</body>
 </html>

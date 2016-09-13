@@ -18,8 +18,14 @@ var TSPopup = function() {
 	this.styleSelector = document.getElementById("style-selector");
 	this.styleEditor = document.getElementById("style-editor");
 	this.closeEditor = document.getElementById("close-editor");
+	this.pageUrlDisplay = document.getElementById("page-url-display");
+	this.pageUrlInput = document.getElementById("page-url-input");
+	this.editUrl = document.getElementById("edit-url");
+	this.saveUrl = document.getElementById("save-url");
 
-	this.pageUrl = "";
+	this.baseUrl = "";
+	this.fullUrl = "";
+	this.activeUrl = "";
 	this.pageSettings = [];
 	this.styles = {};
 
@@ -95,7 +101,21 @@ TSPopup.prototype.addListeners = function() {
 		me.styleEditor.style.display = "none";
 		me.styleDropDown.value = "";
 		me.clearPreview();
-	})
+	});
+
+	me.editUrl.addEventListener("click", function() {
+		me.saveUrl.disabled = false;
+		me.pageUrlDisplay.style.display = "none";
+		me.pageUrlInput.style.display = "block";
+		this.disabled = true;
+	});
+
+	me.saveUrl.addEventListener("click", function() {
+		me.editUrl.disabled = false;
+		me.pageUrlInput.style.display = "none";
+		me.pageUrlDisplay.style.display = "block";
+		this.disabled = true;
+	});
 }
 
 TSPopup.prototype.addOption = function(value, text) {
@@ -223,11 +243,14 @@ TSPopup.prototype.escapeHtml = function(unsafe) {
 TSPopup.prototype.loadSettings = function(settings) {
 	var me = this;
 
-	me.pageUrl = settings.pageUrl ? settings.pageUrl : "";
+	me.baseUrl = settings.baseUrl ? settings.baseUrl : "";
+	me.fullUrl = settings.fullUrl ? settings.fullUrl : "";
+	me.activeUrl = settings.activeUrl ? settings.activeUrl : settings.baseUrl;
 	me.pageSettings = settings.pageSettings ? settings.pageSettings : [];
 	me.styles = settings.styles ? settings.styles : {};
 
-	document.getElementById("page-url").innerHTML = me.pageUrl;
+	me.pageUrlDisplay.innerHTML = me.activeUrl;
+	me.pageUrlInput.value = me.activeUrl;
 
 	me.fillDropDown();
 	if (me.pageSettings) {

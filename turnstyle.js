@@ -8,7 +8,8 @@
  */
 
 var TurnStyle = function() {
-	this.pageUrl = location.origin;
+	this.baseUrl = location.origin;
+	this.fullUrl = location.href;
 	this.pageSettings = [];
 	this.styles = {};
 
@@ -31,13 +32,13 @@ TurnStyle.prototype.loadStyles = function() {
  * loadSettings: look for saved styles in chrome.storage and restyle the page if there are any
  */
 TurnStyle.prototype.loadPageSettings = function() {
-	var pageUrl = this.pageUrl;
+	var baseUrl = this.baseUrl;
 	var me = this;
 
-	chrome.storage.sync.get(pageUrl, function(result) {
-		if (result[pageUrl]) {
-			me.pageSettings = result[pageUrl];
-			result[pageUrl].forEach(function(styleName) {
+	chrome.storage.sync.get(baseUrl, function(result) {
+		if (result[baseUrl]) {
+			me.pageSettings = result[baseUrl];
+			result[baseUrl].forEach(function(styleName) {
 				var styleRules = me.styles[styleName];
 				if (styleRules)
 					me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
@@ -85,22 +86,22 @@ TurnStyle.prototype.removeStyleFromPage = function(styleId, className) {
  * setPageStyle: save the style for this website in chrome storage
  */
 TurnStyle.prototype.setPageStyle = function(styleName) {
-	var pageUrl = this.pageUrl;
-	if (pageUrl !== "styles") {			// make sure we don't overwrite the styles field
+	var baseUrl = this.baseUrl;
+	if (baseUrl !== "styles") {			// make sure we don't overwrite the styles field
 		var pageEntry = {};
 		this.pageSettings.push(styleName);
-		pageEntry[pageUrl] = this.pageSettings;
+		pageEntry[baseUrl] = this.pageSettings;
 		chrome.storage.sync.set(pageEntry);
 	}
 }
 
 TurnStyle.prototype.unsetPageStyle = function(styleName) {
-	var pageUrl = this.pageUrl;
+	var baseUrl = this.baseUrl;
 	var index = this.pageSettings.indexOf(styleName);
 	if (index > -1) {
 		var pageEntry = {};
 		this.pageSettings.splice(index, 1);
-		pageEntry[pageUrl] = this.pageSettings;
+		pageEntry[baseUrl] = this.pageSettings;
 		chrome.storage.sync.set(pageEntry);
 	}
 }	
@@ -138,7 +139,7 @@ TurnStyle.prototype.clearStorage = function(clearAll) {
 		});
 	}
 	else {
-		chrome.storage.sync.remove(this.pageUrl);
+		chrome.storage.sync.remove(this.baseUrl);
 	}
 
 	this.removeStyleFromPage();
@@ -159,7 +160,12 @@ TurnStyle.prototype.addListener = function() {
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		if (request.instruction === "getPageSettings") {
-			sendResponse({pageUrl: me.pageUrl, pageSettings: me.pageSettings, styles: me.styles});
+			sendResponse({
+				baseUrl: me.baseUrl,
+				fullUrl: me.fullUrl,
+				pageSettings: me.pageSettings,
+				styles: me.styles
+			});
 		}
 
 		else if (request.instruction === "insertStyle") {
