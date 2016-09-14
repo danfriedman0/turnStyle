@@ -26,7 +26,7 @@ var TSPopup = function() {
 	this.baseUrl = "";
 	this.fullUrl = "";
 	this.activeUrl = "";
-	this.pageSettings = [];
+	this.pageStyles = [];
 	this.styles = {};
 
 	this.initialize();
@@ -62,14 +62,19 @@ TSPopup.prototype.addListeners = function() {
 			else
 				me.appendError("You should add some rules", me.styleRulesInput);
 		}
-		else if (me.pageSettings.indexOf(styleName) > -1) {
+		else if (me.pageStyles.indexOf(styleName) > -1) {
 			me.sendRequest({instruction: "editStyle", styleName: styleName, styleRules: styleRules});
 			me.styleEditor.style.display = "none";
 			me.styleDropDown.value = "";
 		}
 		else {
-			me.pageSettings.push(styleName);
-			me.sendRequest({instruction: "saveStyle", styleName: styleName, styleRules: styleRules});
+			me.pageStyles.push(styleName);
+			me.sendRequest({
+				instruction: "saveStyle",
+				activeUrl: me.activeUrl,
+				styleName: styleName,
+				styleRules: styleRules
+			});
 			me.addStyleToList(styleName);
 			me.styleEditor.style.display = "none";
 			me.styleDropDown.value = "";
@@ -116,6 +121,9 @@ TSPopup.prototype.addListeners = function() {
 			me.appendError("The URL has to start with " + me.baseUrl, me.pageUrlInput);
 		}
 		else {
+			me.activeUrl = newUrl;
+			me.pageUrlDisplay.innerHTML = newUrl;
+
 			me.clearErrorMessage();
 			me.editUrl.disabled = false;
 			me.pageUrlInput.style.display = "none";
@@ -161,12 +169,21 @@ TSPopup.prototype.editStyle = function(styleName) {
 }
 
 TSPopup.prototype.removeStyle = function(styleNode, styleName) {
-	var index = this.pageSettings.indexOf(styleName);
-	if (index > -1)
-		this.pageSettings.splice(index, 1);
+	var index = this.pageStyles.indexOf(styleName),
+		activeUrl = this.activeUrl;
+		styleId = styleName.replace(/ /g, "-");
 
-	var styleId = styleName.replace(/ /g, "-");
-	this.sendRequest({instruction: "removeStyle", styleId: styleId, styleName: styleName, delete: true});
+	if (index > -1)
+		this.pageStyles.splice(index, 1);
+
+	this.sendRequest({
+		instruction: "removeStyle",
+		activeUrl: activeUrl,
+		styleId: styleId,
+		styleName: styleName,
+		delete: true
+	});
+
 	styleNode.parentNode.removeChild(styleNode);
 	this.addOption(styleName, styleName);
 }
@@ -264,15 +281,15 @@ TSPopup.prototype.loadSettings = function(settings) {
 	me.baseUrl = settings.baseUrl ? settings.baseUrl : "";
 	me.fullUrl = settings.fullUrl ? settings.fullUrl : "";
 	me.activeUrl = settings.activeUrl ? settings.activeUrl : settings.baseUrl;
-	me.pageSettings = settings.pageSettings ? settings.pageSettings : [];
+	me.pageStyles = settings.pageStyles ? settings.pageStyles : [];
 	me.styles = settings.styles ? settings.styles : {};
 
 	me.pageUrlDisplay.innerHTML = me.activeUrl;
 	me.pageUrlInput.value = me.activeUrl;
 
 	me.fillDropDown();
-	if (me.pageSettings) {
-		me.pageSettings.forEach(function(styleName) {
+	if (me.pageStyles) {
+		me.pageStyles.forEach(function(styleName) {
 			me.addStyleToList(styleName);
 		});
 	}
