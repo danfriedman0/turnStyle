@@ -11,7 +11,9 @@
 var TurnStyle = function() {
 	this.baseUrl = location.origin;
 	this.fullUrl = location.href;
-	this.pageSettings = [];
+
+	this.activeUrl = "";
+	this.pageStyles = [];
 	this.styles = {};
 
 	this.initialize();
@@ -20,48 +22,61 @@ var TurnStyle = function() {
 /**
  * loadStyles: load all saved styles into the styles object
  */
-TurnStyle.prototype.loadStyles = function() {
+TurnStyle.prototype.loadSettings = function() {
 	var me = this,
 		fullUrl = this.fullUrl,
 		matches = [],
-		re;
+		re, styleRules;
 
 	chrome.storage.sync.get(null, function(storage) {
 		for (var key in storage) {
-			if (storage.hasOwnProperty(key) && key !== "style") {
-				re = new RegExp("^" + key);
-				if (fullUrl.match(re))
-					matches.push(key);
+			if (storage.hasOwnProperty(key)) {
+				if (key === "styles") {
+					me.styles = storage.styles;
+				}
+				else {
+					re = new RegExp("^" + key);
+					if (fullUrl.match(re))
+						matches.push(key);					
+				}
 			}
 		}
-		if (matches) {
-			console.log(matches.sort()[matches.length-1]);
-		}
-	});
 
-	chrome.storage.sync.get("styles", function(result) {
-		if (result.styles) {
-			me.styles = result.styles;
+		if (matches) {
+			me.activeUrl = matches.sort()[matches.length-1];
+			me.pageStyles = storage[me.activeUrl];
+			me.pageStyles.forEach(function(styleName) {
+				styleRules = me.styles[styleName];
+				if (styleRules)
+					me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
+			});
 		}
 	});
 }
 
 /**
  * loadSettings: look for saved styles in chrome.storage and restyle the page if there are any
- */
-TurnStyle.prototype.loadPageSettings = function() {
-	var baseUrl = this.baseUrl;
-	var me = this;
 
-	chrome.storage.sync.get(baseUrl, function(result) {
-		if (result[baseUrl]) {
-			me.pageSettings = result[baseUrl];
-			result[baseUrl].forEach(function(styleName) {
-				var styleRules = me.styles[styleName];
-				if (styleRules)
-					me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
-			});
+	Load all settings that match this URL and pick the longest one (the closest match)
+ */
+TurnStyle.prototype.loadPageStyles = function() {
+	var baseUrl = this.baseUrl,
+		fullUrl = this.fullUrl,
+		me = this,
+		matches = [],
+		re;
+
+	chrome.storage.sync.get(null, function(result) {
+		for (key in result) {
+			if (result.hasOwnProperty(key) && key !== "style") {
+				re = new RegExp("^" + key);
+				if (fullUrl.match(re))
+					matches.push(key);
+			}
 		}
+
+		matches.sort();
+		me.activeUrl = matches[matches.length - 1];
 	});
 }
 
@@ -107,19 +122,19 @@ TurnStyle.prototype.setPageStyle = function(styleName) {
 	var baseUrl = this.baseUrl;
 	if (baseUrl !== "styles") {			// make sure we don't overwrite the styles field
 		var pageEntry = {};
-		this.pageSettings.push(styleName);
-		pageEntry[baseUrl] = this.pageSettings;
+		this.pageStyles.push(styleName);
+		pageEntry[baseUrl] = this.pageStyles;
 		chrome.storage.sync.set(pageEntry);
 	}
 }
 
 TurnStyle.prototype.unsetPageStyle = function(styleName) {
 	var baseUrl = this.baseUrl;
-	var index = this.pageSettings.indexOf(styleName);
+	var index = this.pageStyles.indexOf(styleName);
 	if (index > -1) {
 		var pageEntry = {};
-		this.pageSettings.splice(index, 1);
-		pageEntry[baseUrl] = this.pageSettings;
+		this.pageStyles.splice(index, 1);
+		pageEntry[baseUrl] = this.pageStyles;
 		chrome.storage.sync.set(pageEntry);
 	}
 }	
@@ -181,7 +196,7 @@ TurnStyle.prototype.addListener = function() {
 			sendResponse({
 				baseUrl: me.baseUrl,
 				fullUrl: me.fullUrl,
-				pageSettings: me.pageSettings,
+				pageStyles: me.pageStyles,
 				styles: me.styles
 			});
 		}
@@ -227,8 +242,8 @@ TurnStyle.prototype.addListener = function() {
 
 
 TurnStyle.prototype.initialize = function() {
-	this.loadStyles();
-	this.loadPageSettings();
+	this.loadSettings();
+	//this.loadPageStyles();
 	this.addListener();
 }
 
