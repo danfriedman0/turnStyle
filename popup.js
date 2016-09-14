@@ -54,19 +54,13 @@ TSPopup.prototype.addListeners = function() {
 	me.saveStyle.addEventListener("click", function() {
 		var styleName = me.escapeHtml(me.styleNameInput.value);
 		var styleRules = me.escapeHtml(me.styleRulesInput.value);
+		var errorMessage;
 
 		if (!styleName || !styleRules) {
-			me.clearErrorMessage();
-			var error = document.createElement("div");
-			error.id = "error-message";
-			if (!styleName) {
-				error.innerHTML = "You should give your style a name";
-				me.styleNameInput.parentNode.insertBefore(error, me.styleNameInput.nextElementSibling);
-			}
-			else {
-				error.innerHTML = "You should add some rules";
-				me.styleRulesInput.parentNode.insertBefore(error, me.styleRulesInput.nextElementSibling);
-			}
+			if (!styleName)
+				me.appendError("You should give your style a name", me.styleNameInput);
+			else
+				me.appendError("You should add some rules", me.styleRulesInput);
 		}
 		else if (me.pageSettings.indexOf(styleName) > -1) {
 			me.sendRequest({instruction: "editStyle", styleName: styleName, styleRules: styleRules});
@@ -113,6 +107,17 @@ TSPopup.prototype.addListeners = function() {
 	});
 
 	me.saveUrl.addEventListener("click", function() {
+		var newUrl = this.value;
+
+		if (newUrl !== me.activeUrl) {
+			// make sure it matches the URL in some way
+			var re = new RegExp("^" + newUrl);
+			if (!me.fullUrl.match(re)) {
+
+			}
+
+		}
+
 		me.editUrl.disabled = false;
 		me.pageUrlInput.style.display = "none";
 		me.pageUrlDisplay.style.display = "block";
@@ -138,6 +143,16 @@ TSPopup.prototype.fillDropDown = function() {
 			me.addOption(key, key);
 		}
 	}
+}
+
+TSPopup.prototype.appendError = function(errorMessage, node) {
+	// only show one error message at a time
+	this.clearErrorMessage();
+
+	var error = document.createElement("div");
+	error.id = "error-message";
+	error.innerHTML = errorMessage;
+	node.parentNode.insertBefore(error, node.nextElementSibling);
 }
 
 TSPopup.prototype.editStyle = function(styleName) {
