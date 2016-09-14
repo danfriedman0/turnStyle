@@ -55,32 +55,6 @@ TurnStyle.prototype.loadSettings = function() {
 }
 
 /**
- * loadSettings: look for saved styles in chrome.storage and restyle the page if there are any
-
-	Load all settings that match this URL and pick the longest one (the closest match)
- */
-TurnStyle.prototype.loadPageStyles = function() {
-	var baseUrl = this.baseUrl,
-		fullUrl = this.fullUrl,
-		me = this,
-		matches = [],
-		re;
-
-	chrome.storage.sync.get(null, function(result) {
-		for (key in result) {
-			if (result.hasOwnProperty(key) && key !== "style") {
-				re = new RegExp("^" + key);
-				if (fullUrl.match(re))
-					matches.push(key);
-			}
-		}
-
-		matches.sort();
-		me.activeUrl = matches[matches.length - 1];
-	});
-}
-
-/**
  * addStyleToPage: override the page's style by inserting the css rules with optional class name and id
  */
 TurnStyle.prototype.addStyleToPage = function(styleRules, styleId, className) {
