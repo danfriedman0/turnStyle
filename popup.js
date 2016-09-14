@@ -107,21 +107,21 @@ TSPopup.prototype.addListeners = function() {
 	});
 
 	me.saveUrl.addEventListener("click", function() {
-		var newUrl = this.value;
-
-		if (newUrl !== me.activeUrl) {
-			// make sure it matches the URL in some way
-			var re = new RegExp("^" + newUrl);
-			if (!me.fullUrl.match(re)) {
-
-			}
-
+		var newUrl = me.escapeHtml(me.pageUrlInput.value);
+		var re = new RegExp("^" + newUrl);
+		if (!me.fullUrl.match(re)) {
+			me.appendError("The URL has to match this page in some way", me.pageUrlInput);
 		}
-
-		me.editUrl.disabled = false;
-		me.pageUrlInput.style.display = "none";
-		me.pageUrlDisplay.style.display = "block";
-		this.disabled = true;
+		else if (newUrl.slice(0, me.baseUrl.length) !== me.baseUrl) {
+			me.appendError("The URL has to start with " + me.baseUrl, me.pageUrlInput);
+		}
+		else {
+			me.clearErrorMessage();
+			me.editUrl.disabled = false;
+			me.pageUrlInput.style.display = "none";
+			me.pageUrlDisplay.style.display = "block";
+			this.disabled = true;
+		}
 	});
 }
 
