@@ -170,6 +170,7 @@ TurnStyle.prototype.addListener = function() {
 			sendResponse({
 				baseUrl: me.baseUrl,
 				fullUrl: me.fullUrl,
+				activeUrl: me.activeUrl,
 				pageStyles: me.pageStyles,
 				styles: me.styles
 			});
