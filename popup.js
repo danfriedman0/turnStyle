@@ -71,12 +71,14 @@ TSPopup.prototype.addListeners = function() {
 		else if (me.pageSettings.indexOf(styleName) > -1) {
 			me.sendRequest({instruction: "editStyle", styleName: styleName, styleRules: styleRules});
 			me.styleEditor.style.display = "none";
+			me.styleDropDown.value = "";
 		}
 		else {
 			me.pageSettings.push(styleName);
 			me.sendRequest({instruction: "saveStyle", styleName: styleName, styleRules: styleRules});
 			me.addStyleToList(styleName);
 			me.styleEditor.style.display = "none";
+			me.styleDropDown.value = "";
 		}
 		me.clearPreview();
 	});
@@ -193,13 +195,14 @@ TSPopup.prototype.addStyleToList = function(styleName) {
 }
 
 TSPopup.prototype.openStyleEditor = function(styleName, editorMode) {
-	this.clearErrorMessage();
-	var styleRules = this.styles[styleName];
+	var me = this;
+	me.clearErrorMessage();
+	var styleRules = me.styles[styleName];
 	if (!styleRules)
 		styleName = styleRules = "";
-	this.styleNameInput.value = styleName;
-	this.styleRulesInput.value = styleRules;		
-	this.styleEditor.style.display = "block";
+	me.styleNameInput.value = styleName;
+	me.styleRulesInput.value = styleRules;
+	me.styleEditor.style.display = "block";
 }
 
 TSPopup.prototype.clearErrorMessage = function() {

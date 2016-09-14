@@ -47,9 +47,6 @@
 				text-align: right;
 				margin-bottom: 4px;
 			}
-			#style-editor {
-				display: none;
-			}
 			#page-url {
 				font-style: italic;
 				font-weight: bold;
@@ -59,6 +56,9 @@
 			}
 			.fixed-height {
 				height: 1.5em;
+			}
+			#style-editor {
+				display: none;
 			}
 		</style>
 	</head>
@@ -98,8 +98,8 @@
 				<option value="new-style">Write a new style</option>
 			</select>
 		</div>
-		
-		<div id="style-editor">
+
+		<div id="style-editor" class="hide">
 			<div id="close-button">
 				<button id="close-editor">close style editor</button>
 			</div>

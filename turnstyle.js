@@ -1,10 +1,11 @@
 /**
+ * turnstyle.js
+ * Dan Friedman
+ *
  * Content script for the turnStyle extension. Whenever a page loads, this file looks in chrome.storage
  * to see if any settings have been saved for that site and restyles the page if it finds anything. It
  * also listens for messages from the extension popup and restyles the page and saves settings when
  * it's instructed to.
- *
- * Dan Friedman
  */
 
 var TurnStyle = function() {
@@ -20,7 +21,24 @@ var TurnStyle = function() {
  * loadStyles: load all saved styles into the styles object
  */
 TurnStyle.prototype.loadStyles = function() {
-	var me = this;
+	var me = this,
+		fullUrl = this.fullUrl,
+		matches = [],
+		re;
+
+	chrome.storage.sync.get(null, function(storage) {
+		for (var key in storage) {
+			if (storage.hasOwnProperty(key) && key !== "style") {
+				re = new RegExp("^" + key);
+				if (fullUrl.match(re))
+					matches.push(key);
+			}
+		}
+		if (matches) {
+			console.log(matches.sort()[matches.length-1]);
+		}
+	});
+
 	chrome.storage.sync.get("styles", function(result) {
 		if (result.styles) {
 			me.styles = result.styles;
