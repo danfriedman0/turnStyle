@@ -26,6 +26,7 @@ a:visited {
 
 .flexbox {
 	display: flex;
+	align-items: flex-start;
 }
 
 .flex-justify {
@@ -55,12 +56,12 @@ a:visited {
 }
 
 #saved-sites-list {
-    max-height: 300px;
+    max-height: 325px;
     overflow-y: scroll;
 }
 
 #saved-styles-list {
-	max-height: 200px;
+	max-height: 225px;
 	overflow-y: scroll;
 }
 
@@ -100,13 +101,14 @@ ul {
 	width: 32em;
 }
 
-/*** page URL / style name */
+/*** editing name */
 
-#page-url-display {
+#editing-name {
 	margin-bottom: 0;
+	overflow-wrap: break-word;
 }
 
-#page-url-input {
+#editing-name-input {
 	display: none;
 }
 
