@@ -168,8 +168,6 @@ TurnStyle.prototype.getStorageInfo = function() {
 TurnStyle.prototype.addListener = function() {
 	var me = this;
 
-	me.getStorageInfo();
-
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		if (request.instruction === "getPageSettings") {
 			sendResponse({
