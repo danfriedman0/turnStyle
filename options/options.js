@@ -37,6 +37,7 @@ var TSOptions = function() {
 
 	this.activeItem = null;
 	this.activeItemNode = null;
+	this.editMode = null;			// "style" or "url"
 
 	this.initialize();
 }
@@ -65,6 +66,11 @@ TSOptions.prototype.addListeners = function() {
 			me.loadUrl(elem.innerHTML);
 		}
 
+		else if (elem.classList.contains("sidebar-style")) {
+			me.selectSidebarItem(elem, elem.innerHTML);
+			me.loadStyle(elem.innerHTML);
+		}
+
 		else if (elem.className === "edit-style") {
 			var styleName = elem.parentNode.previousElementSibling.innerHTML;
 			me.openStyleEditor(styleName);
@@ -75,9 +81,29 @@ TSOptions.prototype.addListeners = function() {
 	document.getElementById("close-editor").addEventListener("click", function() {
 		me.styleEditor.classList.add("hide");
 	});
+
+	document.getElementById("style-dropdown").addEventListener("change", function() {
+		var styleName = this.value;
+		if (styleName)
+			me.openStyleEditor(styleName);
+	});
+
+	document.getElementById("append-importants").addEventListener("click", function() {
+		me.appendImportants();
+	});
 }
 
+/****************************************************************************************************
+ ** Handle user input  ******************************************************************************
+ ****************************************************************************************************/
 
+// based on code from StackOverflow (http://stackoverflow.com/a/6234804)
+TSOptions.prototype.escapeHtml = function(unsafe) {
+	return unsafe
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
 
 
 /****************************************************************************************************
@@ -148,7 +174,22 @@ TSOptions.prototype.selectSidebarItem = function(itemNode, item) {
  ** Configure the editor ****************************************************************************
  ****************************************************************************************************/
 
-TSOptions.prototype.clearEditorList = function(mode) {
+// add "!important" to the end of every rule that doesn't already it "!important"
+TSOptions.prototype.appendImportants = function() {
+	var me = this;
+	var styleRules = me.escapeHtml(me.styleRulesInput.value);
+	var lines = [];
+
+	if (styleRules) {
+		styleRules = styleRules.replace(/ !important/g, "");	// get rid of any previous !importants
+		lines = styleRules.split(";");
+		styleRules = lines.join(" !important;");
+		me.styleRulesInput.value = styleRules;
+	}
+}
+
+// clear the list of active styles or active pages (depending on the mode)
+TSOptions.prototype.clearActiveList = function(mode) {
 	var me = this,
 		nodes, dropDown;
 
@@ -167,6 +208,7 @@ TSOptions.prototype.clearEditorList = function(mode) {
 	}
 }
 
+// load the styleName and the associated styleRules into the style editor
 TSOptions.prototype.openStyleEditor = function(styleName) {
 	var me = this;
 	var styleRules;
@@ -197,7 +239,8 @@ TSOptions.prototype.loadUrl = function(url) {
 	var me = this,
 		template, list, dropDown;
 
-	me.clearEditorList("url");
+	me.editMode = "url";
+	me.clearActiveList("url");
 
 	me.urlButtons.classList.remove("hide");
 	me.pageStyles.classList.remove("hide");
@@ -225,7 +268,8 @@ TSOptions.prototype.loadStyle = function(styleName) {
 		styles = this.savedStyles,
 		template, list, dropDown, urls;
 
-	me.clearEditorList("style");
+	me.editMode = "style";
+	me.clearActiveList("style");
 
 	me.urlButtons.classList.add("hide");
 	me.pageStyles.classList.add("hide");
@@ -243,6 +287,8 @@ TSOptions.prototype.loadStyle = function(styleName) {
 			me.addToList(url, template, list, dropDown);
 		});
 	}
+
+	me.openStyleEditor(styleName);
 }
 
 
