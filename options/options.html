@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>turnStyle options</title>
+	<link rel="stylesheet" href="options.css">
+</head>
+<body>
+
+	<h1>turnStyle</h1>
+
+	<div class="flexbox">
+
+		<div id="sidebar">
+			<div id="saved-sites">
+				<h3 class="sidebar-header">saved sites</h3>
+				<ul id="saved-sites-list">
+					<li tabindex="0" autofocus>http://www.google.com</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu/classes/cs223/current/f</li>
+					<li tabindex="0">http://www.cs.yale.edu</li>
+					<li tabindex="0">http://www.mit.shakespeare.edu</li>
+					<li tabindex="0">http://www.sparknotes.com</li>
+					<li tabindex="0">http://www.google.com</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu/classes/cs223/current/f</li>
+					<li tabindex="0">http://www.cs.yale.edu</li>
+					<li tabindex="0">http://www.mit.shakespeare.edu</li>
+					<li tabindex="0">http://www.sparknotes.com</li>
+					<li tabindex="0">http://www.google.com</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu/classes/cs223/current/f</li>
+					<li tabindex="0">http://www.cs.yale.edu</li>
+					<li tabindex="0">http://www.mit.shakespeare.edu</li>
+					<li tabindex="0">http://www.sparknotes.com</li>
+					<li tabindex="0">http://www.google.com</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu</li>
+					<li tabindex="0">http://www.zoo.cs.yale.edu/classes/cs223/current/f</li>
+					<li tabindex="0">http://www.cs.yale.edu</li>
+					<li tabindex="0">http://www.mit.shakespeare.edu</li>
+					<li tabindex="0">http://www.sparknotes.com</li>
+				</ul>
+			</div>
+			<div id="saved-styles">
+				<h3 class="sidebar-header border-top">saved styles</h3>
+				<ul id="saved-styles-list">
+					<li tabindex="0">basic formatting</li>
+					<li tabindex="0">pink text</li>
+					<li tabindex="0">yellow text</li>
+					<li tabindex="0">bigger font</li>
+					<li tabindex="0">testing</li>
+					<li tabindex="0">sparknotes</li>
+					<li tabindex="0">basic formatting</li>
+					<li tabindex="0">pink text</li>
+					<li tabindex="0">yellow text</li>
+					<li tabindex="0">bigger font</li>
+					<li tabindex="0">testing</li>
+					<li tabindex="0">sparknotes</li>
+					<li tabindex="0">basic formatting</li>
+					<li tabindex="0">pink text</li>
+					<li tabindex="0">yellow text</li>
+					<li tabindex="0">bigger font</li>
+					<li tabindex="0">testing</li>
+					<li tabindex="0">sparknotes</li>
+					<li tabindex="0">basic formatting</li>
+					<li tabindex="0">pink text</li>
+					<li tabindex="0">yellow text</li>
+					<li tabindex="0">bigger font</li>
+					<li tabindex="0">testing</li>
+					<li tabindex="0">sparknotes</li>
+				</ul>
+			</div>
+		</div>
+
+		<div id="editor">
+			<div class="fixed-height">
+				<h1 id="page-url-display"><a href="#">http://google.com</a></h1>
+				<textarea id="page-url-input" rows="1" cols="44"></textarea>
+			</div>
+			<div>
+				<button id="edit-url">edit URL</button>
+				<button id="save-url" disabled>save URL</button>
+			</div>
+			
+			<hr>
+			
+			<h3 id="page-styles">Active styles:</h3>
+			<ul id="style-list">
+				<li class="page-style flexbox template">
+					<span class="style-name"></span>
+					<div>
+						<a class="edit-style" href="#">edit</a>
+						<a class="remove-style" href="#">remove</a>
+					</div>
+				</li>
+			</ul>
+			
+			<hr>
+			
+			<div id="style-selector" class="flexbox">
+				<p id="message">Add a style: </p>
+				<select id="style-dropdown">
+					<option value=""></option>
+					<option value="new-style">Write a new style</option>
+				</select>
+			</div>
+
+			<div id="style-editor" class="hide">
+				<div id="close-button">
+					<button id="close-editor">close style editor</button>
+				</div>
+				<textarea id="style-name-input" rows="1" cols="44" placeholder="Style name"></textarea>
+				<textarea id="style-rules-input" rows="10" cols="44" placeholder="Style rules"></textarea>
+				<div id="buttons" class="flexbox">
+					<div>
+						<button id="preview-style">preview</button>
+						<button id="clear-style" disabled>clear</button>
+						<button id="append-importants" title="append '!important' to all your style rules">!important</button>
+					</div>
+					<div>
+						<button id="save-style">save</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</body>
+</html>
