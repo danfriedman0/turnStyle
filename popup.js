@@ -69,6 +69,7 @@ TSPopup.prototype.addListeners = function() {
 		}
 		else {
 			me.pageStyles.push(styleName);
+			me.styles[styleName] = styleRules;
 			me.sendRequest({
 				instruction: "saveStyle",
 				activeUrl: me.activeUrl,
