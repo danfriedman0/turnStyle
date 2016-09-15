@@ -48,6 +48,14 @@ var TSOptions = function() {
 TSOptions.prototype.addListeners = function() {
 	var me = this;
 
+	document.querySelector("body").addEventListener("keyup", function(e) {
+		// enter key: click on the focused element (to enable keyboard navigation)
+		if (e.which === 13) {
+			e.preventDefault();
+			document.activeElement.click();
+		}
+	});
+
 	// event delegation for dynamically generated elements
 	document.querySelector("body").addEventListener("click", function(e) {
 		var elem = e.target;
@@ -105,7 +113,11 @@ TSOptions.prototype.addToList = function(name, template, list, dropDown) {
 		option.parentNode.removeChild(option);
 }
 
-TSOptions.prototype.removeFromList = function(node, dropDown) {
+/**
+ * remove the node from the active list (i.e. active styles or active sites),
+ *	finds the name, and adds the name back to the dropDown
+ */
+TSOptions.prototype.removeFromActiveList = function(node, dropDown) {
 	var name = node.getElementsByClassName("name")[0].innerHTML;
 	node.parentNode.removeChild(node);
 	this.addOption(name, name, dropDown);
@@ -151,7 +163,7 @@ TSOptions.prototype.clearEditorList = function(mode) {
 
 	for (var i = 0; i < nodes.length; i++) {
 		if (!nodes[i].classList.contains("template"))
-			me.removeFromList(nodes[i], dropDown);
+			me.removeFromActiveList(nodes[i], dropDown);
 	}
 }
 
