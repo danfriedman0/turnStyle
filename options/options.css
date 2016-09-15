@@ -28,6 +28,16 @@ a:visited {
 	display: flex;
 }
 
+.flex-justify {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.template {
+	display: none;
+}
+
 /* Style list */
 
 #sidebar {
@@ -80,11 +90,14 @@ ul {
 	background-color: #d0fafa;
 }
 
-/* Style editor */
+/* Editor */
 
 #editor {
 	margin-left: 2em;
+	width: 32em;
 }
+
+/*** page URL / style name */
 
 #page-url-display {
 	margin-bottom: 0;
@@ -97,6 +110,28 @@ ul {
 hr {
 	margin-top: 1em;
 }
+
+/*** style list */
+
+#style-list {
+	margin-left: 1em;
+}
+
+.page-style {
+	padding: .2em 0;
+}
+
+.style-name {
+	font-weight: bold;
+}
+
+/*** style editor */
+
+#close-button {
+	text-align: right;
+	margin-bottom: .3em;
+}
+
 
 
 

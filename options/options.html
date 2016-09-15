@@ -86,10 +86,43 @@
 			
 			<h3 id="page-styles">Active styles:</h3>
 			<ul id="style-list">
-				<li class="page-style flexbox template">
+				<li class="page-style flex-justify">
+					<span class="style-name">style name</span>
+					<div>
+						<a class="edit-style" href="#">edit</a>
+						<a class="rename-style" href="#">rename</a>
+						<a class="remove-style" href="#">remove</a>
+					</div>
+				</li>
+				<li class="page-style flex-justify">
+					<span class="style-name">style name</span>
+					<div>
+						<a class="edit-style" href="#">edit</a>
+						<a class="rename-style" href="#">rename</a>
+						<a class="remove-style" href="#">remove</a>
+					</div>
+				</li>
+				<li class="page-style flex-justify">
+					<span class="style-name">style name</span>
+					<div>
+						<a class="edit-style" href="#">edit</a>
+						<a class="rename-style" href="#">rename</a>
+						<a class="remove-style" href="#">remove</a>
+					</div>
+				</li>
+				<li class="page-style flex-justify">
+					<span class="style-name">style name</span>
+					<div>
+						<a class="edit-style" href="#">edit</a>
+						<a class="rename-style" href="#">rename</a>
+						<a class="remove-style" href="#">remove</a>
+					</div>
+				</li>
+				<li class="page-style flex-justify template">
 					<span class="style-name"></span>
 					<div>
 						<a class="edit-style" href="#">edit</a>
+						<a class="rename-style" href="#">rename</a>
 						<a class="remove-style" href="#">remove</a>
 					</div>
 				</li>
@@ -97,7 +130,7 @@
 			
 			<hr>
 			
-			<div id="style-selector" class="flexbox">
+			<div id="style-selector" class="flex-justify">
 				<p id="message">Add a style: </p>
 				<select id="style-dropdown">
 					<option value=""></option>
@@ -105,13 +138,13 @@
 				</select>
 			</div>
 
-			<div id="style-editor" class="hide">
+			<div id="style-editor">
 				<div id="close-button">
 					<button id="close-editor">close style editor</button>
 				</div>
-				<textarea id="style-name-input" rows="1" cols="44" placeholder="Style name"></textarea>
-				<textarea id="style-rules-input" rows="10" cols="44" placeholder="Style rules"></textarea>
-				<div id="buttons" class="flexbox">
+				<textarea id="style-name-input" rows="1" cols="60" placeholder="Style name"></textarea>
+				<textarea id="style-rules-input" rows="18" cols="60" placeholder="Style rules"></textarea>
+				<div id="buttons" class="flex-justify">
 					<div>
 						<button id="preview-style">preview</button>
 						<button id="clear-style" disabled>clear</button>
