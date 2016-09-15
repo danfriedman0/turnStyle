@@ -5,17 +5,48 @@
  */
 
 TSOptions = function() {
+	this.savedUrlsList = document.getElementById("saved-urls-list");
+	this.savedStylesList = document.getElementById("saved-styles-list");
+
 	this.savedUrls = {};
 	this.savedStyles = {};
 
 	this.initialize();
 }
 
+// append a list element ( <li [tabindex="0"]>item</li> ) to list
+TSOptions.prototype.appendToSidebarList = function(list, item, focusable) {
+	var li = document.createElement("li");
+	li.innerHTML = item;
+	if (focusable)
+		li.setAttribute("tabindex", "0");
+	list.appendChild(li);
+}
+
+TSOptions.prototype.loadSidebar = function() {
+	var me = this,
+		styles = this.savedStyles,
+		urls = this.savedUrls,
+		styleList = this.savedStylesList,
+		urlList = this.savedUrlsList,
+		key;
+
+	for (key in styles) {
+		if (styles.hasOwnProperty(key))
+			me.appendToSidebarList(styleList, key, true);
+	}
+
+	for (key in urls) {
+		if (urls.hasOwnProperty(key))
+			me.appendToSidebarList(urlList, key, true);
+	}
+}
+
 /**
  * Load settings from storage. Load the saved styles and saved URLs and also map each style
  * to all of the pages it's active on
  */
-TSOptions.prototype.loadSettings = function() {
+TSOptions.prototype.loadSettings = function(callback) {
 	var me = this,
 		style, styles, key, styleNames;
 
@@ -43,11 +74,21 @@ TSOptions.prototype.loadSettings = function() {
 				});
 			}
 		}
+
+		if (callback)
+			callback();
 	});
 }
 
+TSOptions.prototype.initializePage = function() {
+	this.loadSidebar();
+}
+
 TSOptions.prototype.initialize = function() {
-	this.loadSettings();
+	var me = this;
+	me.loadSettings(function() {
+		me.initializePage();
+	});
 }
 
 var options = new TSOptions();
