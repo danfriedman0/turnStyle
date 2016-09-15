@@ -35,41 +35,74 @@
 				<h1 id="editing-name"></h1>
 				<textarea id="editing-name-input" rows="1" cols="44"></textarea>
 			</div>
-			<div class="flex-justify">
+
+			<div id="url-buttons" class="flex-justify hide">
 				<div>
 					<button id="edit-url">change URL</button>
 					<button id="save-url" disabled>save URL</button>
 				</div>
 				<button id="delete-url">delete</button>
 			</div>
-			<hr>
-			
-			<h3 id="page-styles">Active styles:</h3>
-			<ul id="style-list">
-				<li class="page-style flex-justify template">
-					<span class="style-name"></span>
-					<div>
-						<a class="edit-style" href="#">edit</a>
-						<a class="rename-style" href="#">rename</a>
-						<a class="remove-style" href="#">remove</a>
-					</div>
-				</li>
-			</ul>
-			
-			<hr>
-			
-			<div id="style-selector" class="flex-justify">
-				<p id="message">Add a style: </p>
-				<select id="style-dropdown">
-					<option value=""></option>
-					<option value="new-style">Write a new style</option>
-				</select>
+
+			<div id="style-buttons" class="flex-justify hide">
+				<div>
+					<button id="rename-style">rename</button>
+					<button id="save-style-name" disabled>save</button>
+				</div>
+				<button id="delete-url">delete</button>
 			</div>
 
-			<div id="style-editor">
-				<div id="close-button">
-					<button id="close-editor">close style editor</button>
+			<hr>
+			
+			<div id="page-styles" class="hide">
+				<h3>Active styles:</h3>
+				<ul id="page-style-list">
+					<li class="page-style flex-justify template">
+						<span class="name"></span>
+						<div>
+							<a class="edit-style" href="#">edit</a>
+							<a class="rename-style" href="#">rename</a>
+							<a class="remove-style" href="#">remove</a>
+						</div>
+					</li>
+				</ul>
+
+				<div id="style-selector" class="flex-justify selector">
+					<div class="strong-em">Add a style: </div>
+					<select id="style-dropdown">
+						<option value=""></option>
+						<option value="new-style">Write a new style</option>
+					</select>
 				</div>
+
+				<hr>
+			</div>
+
+			<div id="style-urls" class="hide">
+				<h3>Active on:</h3>
+				<ul id="style-url-list">
+					<li class="style-url flex-justify template">
+						<span class="name"></span>
+						<a class="remove-url" href="#">remove</a>
+					</li>
+				</ul>
+
+				<div id="url-selector" class="flex-justify selector">
+					<div class="strong-em">Add a url: </div>
+					<select id="url-dropdown">
+						<option value=""></option>
+						<option value="new-url">Add a new URL</option>
+					</select>
+				</div>
+
+				<hr>
+			</div>
+			
+
+
+
+
+			<div id="style-editor">
 				<textarea id="style-name-input" rows="1" cols="60" placeholder="Style name"></textarea>
 				<textarea id="style-rules-input" rows="18" cols="60" placeholder="Style rules"></textarea>
 				<div id="buttons" class="flex-justify">

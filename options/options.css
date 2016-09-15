@@ -35,6 +35,11 @@ a:visited {
 	align-items: center;
 }
 
+.strong-em {
+	font-weight: bold;
+	font-style: italic;
+}
+
 .template {
 	display: none;
 }
@@ -137,11 +142,27 @@ hr {
 	font-weight: bold;
 }
 
+select {
+	max-width: 20em;
+}
+
+.selector {
+	margin-top: 1em;
+}
+
 /*** style editor */
 
 #close-button {
 	text-align: right;
 	margin-bottom: .3em;
+}
+
+#style-editor {
+	margin-top: 1.5em;
+}
+
+.hide {
+	display: none;
 }
 
 

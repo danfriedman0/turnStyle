@@ -5,13 +5,118 @@
  */
 
 TSOptions = function() {
-	this.savedUrlsList = document.getElementById("saved-urls-list");
-	this.savedStylesList = document.getElementById("saved-styles-list");
+	this.urlList = document.getElementById("saved-urls-list");
+	this.styleList = document.getElementById("saved-styles-list");
+	this.editing = document.getElementById("editing-name");
+	this.urlButtons = document.getElementById("url-buttons");
+	this.pageStyles = document.getElementById("page-styles");
+	this.pageStyleList = document.getElementById("page-style-list");
+	this.pageStyleTemplate = document.getElementsByClassName("page-style template")[0];
+	this.styleSelector = document.getElementById("style-selector");
+	this.styleDropDown = document.getElementById("style-dropdown");
+
+	this.styleButtons = document.getElementById("style-buttons");
+	this.styleUrls = document.getElementById("style-urls");
+	this.styleUrlList = document.getElementById("style-url-list");
+	this.styleUrlTemplate = document.getElementsByClassName("style-url template")[0];
+	this.urlSelector = document.getElementById("url-selector");
+	this.urlDropDown = document.getElementById("url-dropdown");
 
 	this.savedUrls = {};
 	this.savedStyles = {};
 
 	this.initialize();
+}
+
+TSOptions.prototype.loadEditor = function(mode, name) {
+	var me = this;
+
+	me.editing.innerHTML = name;
+}
+
+TSOptions.prototype.addToList = function(name, template, list, dropDown) {
+	var me = this;
+
+	var node = template.cloneNode(true);
+	node.classList.remove("template");
+	node.getElementsByClassName("name")[0].innerHTML = name;
+	list.insertBefore(node, template);
+
+	// remove name from dropdown
+	var option = dropDown.querySelector("option[value='" + name + "']");
+	if (option)
+		option.parentNode.removeChild(option);
+}
+
+TSOptions.prototype.loadUrl = function(url) {
+	var me = this,
+		template, list, dropDown;
+
+	me.urlButtons.classList.remove("hide");
+	me.pageStyles.classList.remove("hide");
+	me.styleButtons.classList.add("hide");
+	me.styleUrls.classList.add("hide");
+
+	if (url) {
+		me.editing.innerHTML = "<a href='" + url + "' + target='_blank'>" + url + "</a>";
+		template = me.pageStyleTemplate;
+		list = me.pageStyleList;
+		dropDown = me.styleDropDown;
+		me.savedUrls[url].forEach(function(styleName) {
+			me.addToList(styleName, template, list, dropDown);
+		});
+	}
+}
+
+TSOptions.prototype.loadStyle = function(styleName) {
+	var me = this,
+		styles = this.savedStyles,
+		template, list, dropDown, urls;
+
+	me.urlButtons.classList.add("hide");
+	me.pageStyles.classList.add("hide");
+	me.styleButtons.classList.remove("hide");
+	me.styleUrls.classList.remove("hide");
+
+	if (styleName && styles[styleName] && styles[styleName].urls) {
+		me.editing.innerHTML = styleName;
+		template = me.styleUrlTemplate;
+		list = me.styleUrlList;
+		dropDown = me.urlDropDown;
+
+		styles[styleName].urls.forEach(function(url) {
+			me.addToList(url, template, list, dropDown);
+		});
+	}
+}
+
+TSOptions.prototype.addOption = function(value, text, dropDown) {
+	var option = document.createElement("option");
+	option.value = value;
+	option.innerHTML = text;
+
+	dropDown.insertBefore(option, dropDown.firstElementChild.nextElementSibling);
+}
+
+TSOptions.prototype.fillDropDowns = function() {
+	var me = this,
+		styles = this.savedStyles,
+		urls = this.savedUrls,
+		styleDropDown = this.styleDropDown,
+		urlDropDown = this.urlDropDown,
+		key;
+
+	for (key in styles) {
+		if (styles.hasOwnProperty(key)) {
+			me.addOption(key, key, styleDropDown);
+		}
+	}
+
+	for (key in urls) {
+		if (urls.hasOwnProperty(key)) {
+			me.addOption(key, key, urlDropDown);
+		}
+	}
 }
 
 // append a list element ( <li [tabindex="0"]>item</li> ) to list
@@ -27,8 +132,8 @@ TSOptions.prototype.loadSidebar = function() {
 	var me = this,
 		styles = this.savedStyles,
 		urls = this.savedUrls,
-		styleList = this.savedStylesList,
-		urlList = this.savedUrlsList,
+		styleList = this.styleList,
+		urlList = this.urlList,
 		key;
 
 	for (key in styles) {
@@ -81,7 +186,19 @@ TSOptions.prototype.loadSettings = function(callback) {
 }
 
 TSOptions.prototype.initializePage = function() {
-	this.loadSidebar();
+	var me = this;
+	me.loadSidebar();
+	me.fillDropDowns();
+
+	var firstItem = me.urlList.getElementsByTagName("li")[0];
+
+	if (firstItem) {
+		firstItem.classList.add("selected");
+		me.loadUrl(firstItem.innerHTML);
+	}
+	else {
+		me.editing.innerHTML = "You haven't added any styles yet";
+	}
 }
 
 TSOptions.prototype.initialize = function() {
