@@ -44,6 +44,9 @@ a:visited {
 #sidebar {
 	border: 2px solid #555;
 	padding: 0;
+	max-width: 15em;
+	min-width: 15em;
+	overflow: hidden;
 }
 
 .sidebar-header {
@@ -57,11 +60,13 @@ a:visited {
 
 #saved-sites-list {
     max-height: 325px;
+    overflow-x: hidden;
     overflow-y: scroll;
 }
 
 #saved-styles-list {
 	max-height: 225px;
+	overflow-x: hidden;
 	overflow-y: scroll;
 }
 
@@ -76,9 +81,7 @@ ul {
 }
 
 #sidebar li {
-	max-width: 15em;
 	padding: .5em .5em;
-	overflow: hidden;
 	background-color: #fff;
 	cursor: pointer;
 	box-sizing: padding-box;
@@ -92,6 +95,10 @@ ul {
 
 #sidebar li:nth-child(odd) {
 	background-color: #F7F7F7;
+}
+
+.selected {
+	font-weight: bold;
 }
 
 /* Editor */
