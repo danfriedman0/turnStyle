@@ -227,7 +227,6 @@ TurnStyle.prototype.addListener = function() {
 
 TurnStyle.prototype.initialize = function() {
 	this.loadSettings();
-	//this.loadPageStyles();
 	this.addListener();
 }
 
