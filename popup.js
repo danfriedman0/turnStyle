@@ -22,6 +22,7 @@ var TSPopup = function() {
 	this.pageUrlInput = document.getElementById("page-url-input");
 	this.editUrl = document.getElementById("edit-url");
 	this.saveUrl = document.getElementById("save-url");
+	this.importantButton = document.getElementById("append-importants");
 
 	this.baseUrl = "";
 	this.fullUrl = "";
@@ -132,6 +133,10 @@ TSPopup.prototype.addListeners = function() {
 			this.disabled = true;
 		}
 	});
+
+	me.importantButton.addEventListener("click", function() {
+		me.appendImportants();
+	});
 }
 
 TSPopup.prototype.addOption = function(value, text) {
@@ -236,6 +241,20 @@ TSPopup.prototype.openStyleEditor = function(styleName, editorMode) {
 	me.styleNameInput.value = styleName;
 	me.styleRulesInput.value = styleRules;
 	me.styleEditor.style.display = "block";
+}
+
+TSPopup.prototype.appendImportants = function() {
+	var me = this;
+	console.log(me);
+	var styleRules = me.escapeHtml(me.styleRulesInput.value);
+	var lines = [];
+
+	if (styleRules) {
+		styleRules = styleRules.replace(/ !important/g, "");	// get rid of any previous !importants
+		lines = styleRules.split(";");
+		styleRules = lines.join(" !important;");
+		me.styleRulesInput.value = styleRules;
+	}
 }
 
 TSPopup.prototype.clearErrorMessage = function() {
