@@ -104,6 +104,7 @@ ul {
 
 .selected {
 	font-weight: bold;
+	font-style: italic;
 }
 
 /* Editor */
