@@ -61,7 +61,6 @@
 						<span class="name"></span>
 						<div>
 							<a class="edit-style" href="#">edit</a>
-							<a class="rename-style" href="#">rename</a>
 							<a class="remove-style" href="#">remove</a>
 						</div>
 					</li>
@@ -102,18 +101,15 @@
 
 
 
-			<div id="style-editor">
+			<div id="style-editor" class="hide">
+				<div id="close-button">
+					<button id="close-editor">close style editor</button>
+				</div>
 				<textarea id="style-name-input" rows="1" cols="60" placeholder="Style name"></textarea>
 				<textarea id="style-rules-input" rows="18" cols="60" placeholder="Style rules"></textarea>
 				<div id="buttons" class="flex-justify">
-					<div>
-						<button id="preview-style">preview</button>
-						<button id="clear-style" disabled>clear</button>
-						<button id="append-importants" title="append '!important' to all your style rules">!important</button>
-					</div>
-					<div>
-						<button id="save-style">save</button>
-					</div>
+					<button id="append-importants" title="append '!important' to all your style rules">!important</button>
+					<button id="save-style">save</button>
 				</div>
 			</div>
 
