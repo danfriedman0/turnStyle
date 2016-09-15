@@ -17,7 +17,7 @@
 	],
 	"content_scripts": [
 		{
-			"matches": ["http://*/*"],
+			"matches": ["http://*/*", "https://*/*"],
 			"js": ["turnstyle.js"],
 			"run_at": "document_start"
 		}
