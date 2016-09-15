@@ -58,7 +58,7 @@ a:visited {
 	margin: 0;
 }
 
-#saved-sites-list {
+#saved-urls-list {
     max-height: 325px;
     overflow-x: hidden;
     overflow-y: scroll;
