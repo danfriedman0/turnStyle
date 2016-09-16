@@ -73,13 +73,21 @@ TSPopup.prototype.addListeners = function() {
 		}
 	});
 
-
 	me.styleDropdown.addEventListener("change", function() {
-		var styleName = this.value;
+		var styleName = this.value,
+			styleRules = me.styles[styleName];
+
 		if (styleName)
-			me.openStyleEditor(styleName);
+			// I have to do this because the dropdown makes everything flicker
+			setTimeout(function() {
+				me.saveStyle(styleName, styleRules);			
+			}, 175);
 		else
 			me.styleEditor.style.display = "none";
+	});
+
+	document.getElementById("add-new-style-button").addEventListener("click", function() {
+		me.openStyleEditor();
 	});
 
 	me.tabModeInput.addEventListener("click", function() {

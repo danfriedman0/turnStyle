@@ -49,6 +49,14 @@ textarea {
 	display: none;
 }
 
+.align-center {
+	text-align: center;
+}
+
+.align-right {
+	text-align: right;
+}
+
 .style-name {
 	font-weight: bold;
 }
@@ -87,7 +95,11 @@ textarea {
 	margin-top: .2em;
 }
 
-#open-options {
+#add-new-style {
 	text-align: center;
+	margin-top: 1em;
+}
+
+#open-options {
 	font-weight: bold;
 }
