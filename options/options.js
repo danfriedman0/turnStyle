@@ -44,6 +44,7 @@ var TSOptions = function() {
 	this.popupMessage = document.getElementById("popup-message");
 	this.popupButtons = document.getElementById("popup-buttons");
 	this.closePopup = document.getElementById("close-popup");
+	this.popupInput = document.getElementById("popup-input");
 
 
 	this.savedUrls = {};
@@ -147,26 +148,34 @@ TSOptions.prototype.addListeners = function() {
 		else if (me.editMode === "url") {
 			me.saveUrlStyle(styleName, styleRules);
 			me.styleDropdown.value = "";
+			me.openPopup("Saved style", "alert");
 		}
 		else {
 			me.saveStyle(styleName, styleRules);
 			me.savedStyles[styleName].rules = styleRules;
+			me.openPopup("Saved style", "alert");
 		}
 
 	});
 
 	document.getElementById("delete-url").addEventListener("click", function() {
-		var url = me.activeItem;
-		me.confirm("Are you sure you want to delete your settings for " + url + "?", function(response) {
-			if (response)
+		var url = me.activeItem,
+			message = "Are you sure you want to delete your settings for " + url + "?";
+
+		me.openPopup(message, "confirm", function(reply) {
+			if (reply)
 				me.deleteUrl(url, true);
 		});
 	});
 
 	document.getElementById("delete-style").addEventListener("click", function() {
-		var styleName = me.activeItem;
-		if (confirm("Are you sure you want to delete " + styleName + "?"))
-			me.deleteStyle(styleName, true);
+		var styleName = me.activeItem,
+			message = "Are you sure you want to delete " + styleName + "?";
+
+		me.openPopup(message, "confirm", function(reply) {
+			if (reply)
+				me.deleteStyle(styleName, true);
+		});
 	});
 
 	me.urlDropdown.addEventListener("change", function() {
@@ -198,11 +207,31 @@ TSOptions.prototype.addListeners = function() {
 			me.urlDropdown = "";
 			me.newUrl.classList.add("hide");
 		}
-	})
+	});
 
 	document.getElementById("cancel-new-url").addEventListener("click", function() {
 		me.newUrl.classList.add("hide");
 		me.urlDropdown.value = "";
+	});
+
+	document.getElementById("new-style").addEventListener("click", function() {
+		me.openPopup("Enter a name:", "prompt-style", function(response) {
+			if (response) {
+				me.addNewStyle(response, "", true);
+				me.selectSidebarItem(me.styleList.childNodes.item(1), response)
+				me.loadStyle(response);
+			}
+		});
+	});
+
+	document.getElementById("new-site").addEventListener("click", function() {
+		me.openPopup("Enter a url:", "prompt-url", function(response) {
+			if (response) {
+				me.addNewUrl(response, [], true, me.activeItemNode);
+				me.selectSidebarItem(me.urlList.childNodes.item(1), response);
+				me.loadUrl(response);
+			}
+		});
 	});
 }
 
@@ -237,9 +266,23 @@ TSOptions.prototype.validateUrl = function(url) {
 	return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(url);
 }
 
-TSOptions.prototype.confirm = function(message, callback) {
+TSOptions.prototype.validateStyleName = function(styleName) {
+	var me = this;
+	if (me.savedStyles[styleName])
+		return false;
+	else
+		return true;
+}
+
+/****************************************************************************************************
+ ** Messaging  **************************************************************************************
+ ****************************************************************************************************/
+
+TSOptions.prototype.openPopup = function(message, mode, callback) {
 	var me = this,
-		clone, confirmPopup;
+		clone, cancelPopup, confirmPopup, input;
+
+	me.clearErrorMessage();
 
 	// clone the buttons to clear event listeners
 	clone = me.closePopup.cloneNode(true);
@@ -251,26 +294,63 @@ TSOptions.prototype.confirm = function(message, callback) {
 
 	me.popupMessage.innerHTML = message;
 
+	if (mode === "prompt-style" || mode === "prompt-url")
+		me.popupInput.classList.remove("hide")
+	else
+		me.popupInput.classList.add("hide");
+
 	// bind new events
 	me.closePopup.addEventListener("click", function() {
 		me.popup.classList.add("hide");
-		callback(false);
+		if (mode === "confirm")
+			callback(false);
 	});
 
-	document.getElementById("cancel-popup").addEventListener("click", function() {
-		me.popup.classList.add("hide");
-		callback(false);		
-	});
+	cancelPopup = document.getElementById("cancel-popup");
+
+	if (mode === "alert") {
+		cancelPopup.classList.add("hide");
+	}
+	else {
+		cancelPopup.classList.remove("hide");
+		cancelPopup.addEventListener("click", function() {
+			me.popup.classList.add("hide");
+			callback(false);
+		});
+	}
+
+
 
 	confirmPopup = document.getElementById("confirm-popup");
 	confirmPopup.addEventListener("click", function() {
-		me.popup.classList.add("hide");
-		callback(true);		
+
+		if (mode === "confirm") {
+			me.popup.classList.add("hide");
+			callback(true);		
+		}
+		else if (mode === "prompt-style" || mode === "prompt-url") {
+			me.clearErrorMessage();
+			input = me.escapeHtml(me.popupInput.value);
+			if (!input) {
+				me.appendError("You have to enter something", me.popupInput);
+			}
+			else if (mode === "prompt-url" && !me.validateUrl(input)) {
+				me.appendError("Invalid URL (make sure to begin with 'http://')", me.popupInput);
+			}
+			else if (mode === "prompt-style" && !me.validateStyleName(input)) {
+				me.appendError("That style already exists", me.popupInput);
+			}
+			else {
+				me.popup.classList.add("hide");
+				callback(input);
+			}
+		}
 	});
 
 	me.popup.classList.remove("hide");
 	confirmPopup.focus();
 }
+
 
 /****************************************************************************************************
  ** Save changes  ***********************************************************************************
