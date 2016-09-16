@@ -77,6 +77,10 @@ TSOptions.prototype.addListeners = function() {
 			me.openStyleEditor(styleName);
 		}
 
+		else if (elem.className === "remove-style") {
+			me.removeStyleFromUrl(elem, me.activeItem);
+		}
+
 	});
 
 	document.getElementById("close-editor").addEventListener("click", function() {
@@ -209,9 +213,32 @@ TSOptions.prototype.deleteUrl = function(url) {
 	chrome.storage.sync.remove(url);
 }
 
+TSOptions.prototype.removeStyleFromUrl = function(node, url) {
+	var me = this,
+		entry = {},
+		index, style, styleName;
+
+	// update DOM
+	styleName = node.parentNode.previousElementSibling.innerHTML;
+
+	me.pageStyleList.removeChild(node.parentNode.parentNode);	// this is not ideal...
+	me.addOption(styleName, styleName, me.styleDropDown);
+
+	// update URL settings
+	index = me.savedUrls[url].indexOf(styleName);
+	me.savedUrls[url].splice(index, 1);
+	entry[url] = me.savedUrls[url];
+	chrome.storage.sync.set(entry);
+
+	// update style settings
+	style = me.savedStyles[styleName];
+	index = style.urls.indexOf(url);
+	style.urls.splice(index, 1);
+}
+
 
 /****************************************************************************************************
- ** Manipulate DOM elements  ************************************************************************
+ ** Manipulate DOM **********************************************************************************
  ****************************************************************************************************/
 
 // add an option to a dropdown with the specified value and text
