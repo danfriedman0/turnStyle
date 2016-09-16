@@ -6,12 +6,13 @@
  */
 
 var TSPopup = function() {
+	"use strict";
 
 	// page URL
 	this.pageUrlDisplay = document.getElementById("page-url-display");
 	this.pageUrlInput = document.getElementById("page-url-input");
 	this.editUrl = document.getElementById("edit-url");
-	this.saveUrl = document.getElementById("save-url");
+	this.saveUrlButton = document.getElementById("save-url");
 
 	// style selector
 	this.message = document.getElementById("message");
@@ -20,20 +21,21 @@ var TSPopup = function() {
 
 	// style editor and buttons
 	this.styleEditor = document.getElementById("style-editor");
+	this.tabModeInput = document.getElementById("tab-mode");
 	this.closeEditor = document.getElementById("close-editor");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
 	this.previewStyle = document.getElementById("preview-style");
 	this.clearStyle = document.getElementById("clear-style");
 	this.importantButton = document.getElementById("append-importants");
-	this.saveStyle = document.getElementById("save-style");
-
+	this.saveStyleButton = document.getElementById("save-style");
 
 	this.baseUrl = "";
 	this.fullUrl = "";
 	this.activeUrl = "";
 	this.pageStyles = [];
 	this.styles = {};
+	this.tabMode = this.tabModeInput.checked;
 
 	this.initialize();
 }
@@ -46,52 +48,23 @@ var TSPopup = function() {
 TSPopup.prototype.addListeners = function() {
 	var me = this;
 
-	me.previewStyle.addEventListener("click", function() {
-		if (me.styleRulesInput.value) {
-			var styleRules = me.escapeHtml(me.styleRulesInput.value);
-			me.preview(styleRules);
+	// enter key: click on the focused element (to enable keyboard navigation)
+	document.querySelector("body").addEventListener("keyup", function(e) {
+		if (e.which === 13) {
+			e.preventDefault();
+			document.activeElement.click();
 		}
 	});
 
-	me.clearStyle.addEventListener("click", function() {
-		me.clearPreview();
-	})
-
-	me.saveStyle.addEventListener("click", function() {
-		var styleName = me.escapeHtml(me.styleNameInput.value);
-		var styleRules = me.escapeHtml(me.styleRulesInput.value);
-		var errorMessage;
-
-		if (!styleName)
-			me.appendError("You should give your style a name", me.styleNameInput);
-		else if (!styleRules)
-			me.appendError("You should add some rules", me.styleRulesInput);
-		else
-			me.saveStyle(styleName, styleRules);
-	});
-
-	me.styleDropdown.addEventListener("change", function() {
-		var styleName = this.value;
-		if (styleName)
-			me.openStyleEditor(styleName);
-		else
-			me.styleEditor.style.display = "none";
-	});
-
-	me.closeEditor.addEventListener("click", function() {
-		me.styleEditor.style.display = "none";
-		me.styleDropdown.value = "";
-		me.clearPreview();
-	});
-
 	me.editUrl.addEventListener("click", function() {
-		me.saveUrl.disabled = false;
+		me.saveUrlButton.disabled = false;
 		me.pageUrlDisplay.style.display = "none";
 		me.pageUrlInput.style.display = "block";
+		me.pageUrlInput.focus();
 		this.disabled = true;
 	});
 
-	me.saveUrl.addEventListener("click", function() {
+	me.saveUrlButton.addEventListener("click", function() {
 		var newUrl = me.escapeHtml(me.pageUrlInput.value);
 		var re = new RegExp("^" + newUrl);
 		if (!me.fullUrl.match(re)) {
@@ -106,8 +79,65 @@ TSPopup.prototype.addListeners = function() {
 		}
 	});
 
+
+	me.styleDropdown.addEventListener("change", function() {
+		var styleName = this.value;
+		if (styleName)
+			me.openStyleEditor(styleName);
+		else
+			me.styleEditor.style.display = "none";
+	});
+
+	me.tabModeInput.addEventListener("click", function() {
+		me.tabMode = !me.tabMode;
+	});
+
+	me.closeEditor.addEventListener("click", function() {
+		me.styleEditor.style.display = "none";
+		me.styleDropdown.value = "";
+		me.clearPreview();
+	});
+
+	// copied from Stack Overflow: http://stackoverflow.com/a/18303822
+	me.styleRulesInput.addEventListener("keydown", function(e) {
+		if (e.which === 9 && me.tabMode) {
+			var start = this.selectionStart;
+			var end = this.selectionEnd;
+			var target = e.target;
+			var value = target.value;
+
+			target.value = value.substring(0, start) + "\t" + value.substring(end);
+			this.selectionStart = this.selectionEnd = start + 1;
+			e.preventDefault();
+		}
+	});
+
+	me.previewStyle.addEventListener("click", function() {
+		if (me.styleRulesInput.value) {
+			var styleRules = me.escapeHtml(me.styleRulesInput.value);
+			me.preview(styleRules);
+		}
+	});
+
+	me.clearStyle.addEventListener("click", function() {
+		me.clearPreview();
+	});
+
 	me.importantButton.addEventListener("click", function() {
 		me.appendImportants();
+	});
+
+	me.saveStyleButton.addEventListener("click", function() {
+		var styleName = me.escapeHtml(me.styleNameInput.value);
+		var styleRules = me.escapeHtml(me.styleRulesInput.value);
+		var errorMessage;
+
+		if (!styleName)
+			me.appendError("You should give your style a name", me.styleNameInput);
+		else if (!styleRules)
+			me.appendError("You should add some rules", me.styleRulesInput);
+		else
+			me.saveStyle(styleName, styleRules);
 	});
 }
 
@@ -117,15 +147,19 @@ TSPopup.prototype.addListeners = function() {
 
 // Save changes to the active URL
 TSPopup.prototype.saveUrl = function(url) {
-	var me = this;
+	var me = this,
+		entry = {};
 
 	me.activeUrl = url;
-	me.pageUrlDisplay.innerHTML = newUrl;
+	me.pageUrlDisplay.innerHTML = url;
 
 	me.clearErrorMessage();
 	me.editUrl.disabled = false;
 	me.pageUrlInput.style.display = "none";
 	me.pageUrlDisplay.style.display = "block";
+
+	entry[url] = me.pageStyles;
+	chrome.storage.sync.set(entry);
 }
 
 // Remove a style from the page, from the style list, and from the saved settings
@@ -153,7 +187,7 @@ TSPopup.prototype.removeStyle = function(styleNode, styleName) {
  * saveStyle: update the style if it's already been added to the page;
  *	otherwise save it and add it to the page
  */
-TSPopup.saveStyle = function(styleName, styleRules) {
+TSPopup.prototype.saveStyle = function(styleName, styleRules) {
 	var me = this;
 
 	if (me.pageStyles.indexOf(styleName) > -1) {
@@ -188,7 +222,7 @@ TSPopup.prototype.clearPreview = function() {
 }
 
 // Add a preview of the style to the page
-TSPopup.preview = function(styleRules) {
+TSPopup.prototype.preview = function(styleRules) {
 	var me = this;
 	me.sendRequest({
 		instruction: "insertStyle",
@@ -240,7 +274,6 @@ TSPopup.prototype.editStyle = function(styleName) {
 // add "!important" to every style rule that doesn't already have one
 TSPopup.prototype.appendImportants = function() {
 	var me = this;
-	console.log(me);
 	var styleRules = me.escapeHtml(me.styleRulesInput.value);
 	var lines = [];
 
@@ -368,10 +401,6 @@ TSPopup.prototype.initialize = function() {
 	var me = this;
 	me.addListeners();
 	me.sendRequest({instruction: "getPageSettings"}, me.loadSettings, me);
-
-	chrome.storage.sync.get(null, function(storage) {
-		console.log(storage);
-	})
 }
 
 var popup = new TSPopup();
