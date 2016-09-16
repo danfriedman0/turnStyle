@@ -114,6 +114,12 @@ ul {
 	width: 32em;
 }
 
+#error-message {
+	font-size: .9em;
+	color: #f00;
+	margin-bottom: 4px;
+}
+
 /*** editing name */
 
 #editing-name {
