@@ -1,13 +1,13 @@
 {
 	"manifest_version": 2,
 
-	"name": "turnstyle",
+	"name": "turnStyle",
 	"description": "Customize the style of any page on the web",
 	"version": "1.0",
 
 	"browser_action": {
 		"default_icon": "icon.png",
-		"default_title": "Restyle this page",
+		"default_title": "turnStyle",
 		"default_popup": "popup/popup.html"
 	},
 
@@ -21,9 +21,6 @@
 			"js": ["turnstyle.js"],
 			"run_at": "document_start"
 		}
-	],
-	"web_accessible_resources": [
-		"styles/*.css"
 	],
 	"options_page": "options/options.html"
 }
