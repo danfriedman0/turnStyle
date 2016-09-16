@@ -11,24 +11,18 @@ var TSPopup = function() {
 	// page URL
 	this.pageUrlDisplay = document.getElementById("page-url-display");
 	this.pageUrlInput = document.getElementById("page-url-input");
-	this.editUrl = document.getElementById("edit-url");
+	this.editUrlButton = document.getElementById("edit-url");
 	this.saveUrlButton = document.getElementById("save-url");
 
 	// style selector
-	this.message = document.getElementById("message");
 	this.styleSelector = document.getElementById("style-selector");
 	this.styleDropdown = document.getElementById("style-dropdown");
 
 	// style editor and buttons
 	this.styleEditor = document.getElementById("style-editor");
 	this.tabModeInput = document.getElementById("tab-mode");
-	this.closeEditor = document.getElementById("close-editor");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
-	this.previewStyle = document.getElementById("preview-style");
-	this.clearStyle = document.getElementById("clear-style");
-	this.importantButton = document.getElementById("append-importants");
-	this.saveStyleButton = document.getElementById("save-style");
 
 	this.baseUrl = "";
 	this.fullUrl = "";
@@ -56,7 +50,7 @@ TSPopup.prototype.addListeners = function() {
 		}
 	});
 
-	me.editUrl.addEventListener("click", function() {
+	me.editUrlButton.addEventListener("click", function() {
 		me.saveUrlButton.disabled = false;
 		me.pageUrlDisplay.style.display = "none";
 		me.pageUrlInput.style.display = "block";
@@ -92,7 +86,7 @@ TSPopup.prototype.addListeners = function() {
 		me.tabMode = !me.tabMode;
 	});
 
-	me.closeEditor.addEventListener("click", function() {
+	document.getElementById("close-editor").addEventListener("click", function() {
 		me.styleEditor.style.display = "none";
 		me.styleDropdown.value = "";
 		me.clearPreview();
@@ -112,22 +106,22 @@ TSPopup.prototype.addListeners = function() {
 		}
 	});
 
-	me.previewStyle.addEventListener("click", function() {
+	document.getElementById("preview-style").addEventListener("click", function() {
 		if (me.styleRulesInput.value) {
 			var styleRules = me.escapeHtml(me.styleRulesInput.value);
 			me.preview(styleRules);
 		}
 	});
 
-	me.clearStyle.addEventListener("click", function() {
+	document.getElementById("clear-style").addEventListener("click", function() {
 		me.clearPreview();
 	});
 
-	me.importantButton.addEventListener("click", function() {
+	document.getElementById("append-importants").addEventListener("click", function() {
 		me.appendImportants();
 	});
 
-	me.saveStyleButton.addEventListener("click", function() {
+	document.getElementById("save-style").addEventListener("click", function() {
 		var styleName = me.escapeHtml(me.styleNameInput.value);
 		var styleRules = me.escapeHtml(me.styleRulesInput.value);
 		var errorMessage;
@@ -158,7 +152,7 @@ TSPopup.prototype.saveUrl = function(url) {
 	me.pageUrlDisplay.innerHTML = url;
 
 	me.clearErrorMessage();
-	me.editUrl.disabled = false;
+	me.editUrlButton.disabled = false;
 	me.pageUrlInput.style.display = "none";
 	me.pageUrlDisplay.style.display = "block";
 
