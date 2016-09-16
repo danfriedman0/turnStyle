@@ -180,6 +180,10 @@ select {
 	margin-bottom: .3em;
 }
 
+#style-name-input {
+	margin-top: .5em;
+}
+
 #style-editor {
 	margin-top: 1.5em;
 }
