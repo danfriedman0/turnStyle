@@ -148,6 +148,11 @@ TSPopup.prototype.saveUrl = function(url) {
 	var me = this,
 		entry = {};
 
+	// if the new URL is shorter than the previous one, remove the previous URL
+	// from storage so it doesn't overwrite the new one
+	if (url.length < me.activeUrl.length)
+		chrome.storage.sync.remove(me.activeUrl);
+
 	me.activeUrl = url;
 	me.pageUrlDisplay.innerHTML = url;
 
