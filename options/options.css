@@ -117,6 +117,7 @@ ul {
 #editor {
 	margin-left: 2em;
 	width: 32em;
+	position: relative;
 }
 
 #error-message {
@@ -187,7 +188,37 @@ select {
 	display: none;
 }
 
+/* popup */
 
+#popup {
+	position: absolute;
+	display: inline-block;
+    left: 330px;
+    top: 150px;
+	border: 1px solid rgba(0, 0, 0, .1);
+	border-radius: 5px;
+	padding: 5px;
+	background-color: #fff;
+	min-width: 167px;	
+}
+
+#close-popup {
+	position: absolute;
+	top: 0;
+	right: 5px;
+	text-decoration: none;
+	color: #000;
+}
+
+#popup-wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	min-width: 100%;
+	min-height: 100%;
+	padding: -200px;
+	background-color: rgba(0, 0, 0, .1);
+}
 
 
 
