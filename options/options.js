@@ -18,6 +18,7 @@ var TSOptions = function() {
 	this.styleRulesInput = document.getElementById("style-rules-input");
 	this.newUrl = document.getElementById("new-url");
 	this.newUrlInput = document.getElementById("new-url-input");
+	this.tabModeInput = document.getElementById("tab-mode");
 
 	// URL info
 	this.urlButtons = document.getElementById("url-buttons");
@@ -54,6 +55,8 @@ var TSOptions = function() {
 	this.activeItem = null;			// selected style or url
 	this.activeItemNode = null;		// sidebar node for the selected style or url
 	this.editMode = null;			// "style" or "url"
+
+	this.tabMode = this.tabModeInput.checked;
 
 	this.initialize();
 }
@@ -108,6 +111,24 @@ TSOptions.prototype.addListeners = function() {
 			me.openStyleEditor(styleName);
 		}
 	});
+
+	me.tabModeInput.addEventListener("click", function() {
+		me.tabMode = !me.tabMode;
+	});
+
+	// copied from Stack Overflow: http://stackoverflow.com/a/18303822
+	me.styleRulesInput.addEventListener("keydown", function(e) {
+		if (e.which === 9 && me.tabMode) {
+			var start = this.selectionStart;
+			var end = this.selectionEnd;
+			var target = e.target;
+			var value = target.value;
+
+			target.value = value.substring(0, start) + "\t" + value.substring(end);
+			this.selectionStart = this.selectionEnd = start + 1;
+			e.preventDefault();
+		}
+	})
 
 	me.editUrlButton.addEventListener("click", function() {
 		me.editUrl();
