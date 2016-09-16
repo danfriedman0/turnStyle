@@ -16,6 +16,8 @@ var TSOptions = function() {
 	this.styleEditor = document.getElementById("style-editor");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
+	this.newUrl = document.getElementById("new-url");
+	this.newUrlInput = document.getElementById("new-url-input");
 
 	// URL info
 	this.urlButtons = document.getElementById("url-buttons");
@@ -83,7 +85,11 @@ TSOptions.prototype.addListeners = function() {
 		}
 
 		else if (elem.className === "remove-style") {
-			me.removeStyleFromUrl(elem, me.activeItem);
+			me.removeStyleFromUrl(elem);
+		}
+
+		else if (elem.className === "remove-url") {
+			me.removeStyleFromUrl(elem);
 		}
 
 	});
@@ -120,20 +126,74 @@ TSOptions.prototype.addListeners = function() {
 	});
 
 	document.getElementById("save-style").addEventListener("click", function() {
-		if (me.editMode === "url")	
-			me.saveUrlStyle();
-		me.styleDropdown.value = "";
+		var styleName = me.escapeHtml(me.styleNameInput.value),
+			styleRules = me.escapeHtml(me.styleRulesInput.value);
+
+		me.clearErrorMessage();
+
+		if (!styleName) {
+			me.appendError("You should give your style a name", me.styleNameInput);
+		}
+		else if (!styleRules) {
+			me.appendError("You should add some rules", me.styleRulesInput);
+		}
+		else if (me.editMode === "url") {
+			me.saveUrlStyle(styleName, styleRules);
+			me.styleDropdown.value = "";
+		}
+		else {
+			me.saveStyle(styleName, styleRules);
+			me.savedStyles[styleName].rules = styleRules;
+		}
+
 	});
 
 	document.getElementById("delete-url").addEventListener("click", function() {
 		var url = me.activeItem;
-		me.deleteUrl(url);
+		if (confirm("Are you sure you want to delete your settings for " + url + "?"))
+			me.deleteUrl(url, true);
 	});
 
 	document.getElementById("delete-style").addEventListener("click", function() {
 		var styleName = me.activeItem;
 		if (confirm("Are you sure you want to delete " + styleName + "?"))
-			me.deleteStyle(styleName);
+			me.deleteStyle(styleName, true);
+	});
+
+	me.urlDropdown.addEventListener("change", function() {
+		var url = this.value;
+		if (url === "new-url") {
+			me.clearErrorMessage();
+			me.newUrl.classList.remove("hide");
+			me.newUrlInput.focus();
+		}
+		else if (url) {
+			me.addUrlToStyle(url);
+			this.value = "";
+			me.newUrl.classList.add("hide");
+		}
+		else {
+			me.newUrl.classList.add("hide");
+		}	
+	});
+
+	document.getElementById("add-new-url").addEventListener("click", function() {
+		var url = me.newUrlInput.value;
+		if (!me.validateUrl(url)) {
+			me.appendError("Invalid URL (make sure to add 'http://')", me.newUrl);
+		}
+		else {
+			me.clearErrorMessage();
+			me.addUrlToStyle(url);
+			me.newUrlInput = "";
+			me.urlDropdown = "";
+			me.newUrl.classList.add("hide");
+		}
+	})
+
+	document.getElementById("cancel-new-url").addEventListener("click", function() {
+		me.newUrl.classList.add("hide");
+		me.urlDropdown.value = "";
 	});
 }
 
@@ -180,7 +240,7 @@ TSOptions.prototype.saveStyle = function(name, rules) {
 	chrome.storage.sync.set({"styles": me.storageStyles});
 }
 
-TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown) {
+TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown, targetNode) {
 	var me = this;
 
 	me.savedStyles[name] = {
@@ -188,7 +248,7 @@ TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown) {
 		rules: rules
 	};
 
-	me.appendToSidebarList(me.styleList, name, true, "sidebar-style");
+	me.appendToSidebarList(me.styleList, name, true, "sidebar-style", targetNode);
 
 	if (addToDropdown)
 		me.addOption(name, name, me.styleDropdown);
@@ -196,7 +256,7 @@ TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown) {
 	me.saveStyle(name, rules);
 }
 
-TSOptions.prototype.deleteStyle = function(styleName) {
+TSOptions.prototype.deleteStyle = function(styleName, reload) {
 	var me = this,
 		entry = {},
 		nodes, option, urls, key, index, i;
@@ -229,22 +289,16 @@ TSOptions.prototype.deleteStyle = function(styleName) {
 	}
 
 	// load something else
-	me.loadASetting();
+	if (reload)
+		me.loadASetting("style");
 
 	delete me.savedStyles[styleName];
 	delete me.storageStyles[styleName];
 	entry["styles"] = me.storageStyles;
 
 	// save all the new settings
-	chrome.storage.sync.set(entry, function() {
-		chrome.storage.sync.get(null, function(storage) {
-			console.log(storage);
-		});
-	});
+	chrome.storage.sync.set(entry);
 }
-
-
-
 
 TSOptions.prototype.renameStyle = function() {
 	var me = this;
@@ -259,15 +313,56 @@ TSOptions.prototype.renameStyle = function() {
 
 TSOptions.prototype.saveStyleName = function() {
 	var me = this,
-		styleName = me.escapeHtml(me.editingInput.value);
+		activeUrls = [],
+		oldStyle = me.activeItem,
+		styleName = me.escapeHtml(me.editingInput.value),
+		styleRules, index, urls, key;
+
+	if (styleName !== me.activeItem) {
+		styleRules = me.savedStyles[me.activeItem].rules;
+		me.addNewStyle(styleName, styleRules, true, me.activeItemNode);
+
+		// go through all the saved urls to swap in the replacement
+		urls = me.savedUrls;
+		for (key in urls) {
+			if (urls.hasOwnProperty(key) && urls[key].indexOf(oldStyle) > -1) {
+				urls[key].push(styleName);
+				activeUrls.push(key);
+			}
+		}
+		me.savedStyles[styleName].urls = activeUrls;
+
+		index = Array.prototype.indexOf.call(me.styleList.childNodes, me.activeItemNode) - 1;
+		me.deleteStyle(me.activeItem, false);
+		me.selectSidebarItem(me.styleList.childNodes.item(index), styleName);
+	}
 
 	me.editing.innerHTML = styleName;
 	me.editing.classList.remove("hide");
 	me.editingInput.classList.add("hide");
-	me.saveUrlButton.disabled = true;
-	me.editUrlButton.disabled = false;	
+	me.saveStyleNameButton.disabled = true;
+	me.renameStyleButton.disabled = false;	
 }
 
+
+TSOptions.prototype.addUrlToStyle = function(url) {
+	var me = this,
+		style = me.activeItem,
+		entry = {};
+
+	me.addToList(url, me.styleUrlTemplate, me.styleUrlList, me.urlDropdown);
+
+	if (!me.savedUrls[url]) {
+		me.addNewUrl(url, [style], true);
+	}
+	else {
+		me.savedUrls[url].push(style);
+		entry[url] = me.savedUrls[url];
+		chrome.storage.sync.set(entry);
+	}
+
+	me.savedStyles[style].urls.push(url);
+}
 
 
 /** URL changes *************************************************************************************/
@@ -291,23 +386,14 @@ TSOptions.prototype.addNewUrl = function(url, styles, addToDropdown, targetNode)
 	chrome.storage.sync.set(entry);
 }
 
-TSOptions.prototype.saveUrlStyle = function() {
+TSOptions.prototype.saveUrlStyle = function(styleName, styleRules) {
 	var me = this,
-		styleName = me.escapeHtml(me.styleNameInput.value),
-		styleRules = me.escapeHtml(me.styleRulesInput.value),
 		url = me.activeItem,
 		pageStyles = me.savedUrls[url],
 		entry = {};
 
-	if (!styleName) {
-		me.appendError("You should give your style a name", me.styleNameInput);
-	}
-	else if (!styleRules) {
-		me.appendError("You should add some rules", me.styleRulesInput);
-	}
-
 	// the style has already been added to this page
-	else if (pageStyles.indexOf(styleName) > -1) {
+	if (pageStyles.indexOf(styleName) > -1) {
 		me.saveStyle(styleName, styleRules);
 		me.savedStyles[styleName].rules = styleRules;
 		me.styleEditor.classList.add("hide");
@@ -331,7 +417,7 @@ TSOptions.prototype.saveUrlStyle = function() {
 	}
 }
 
-TSOptions.prototype.deleteUrl = function(url) {
+TSOptions.prototype.deleteUrl = function(url, reload) {
 	var me = this,
 		nodes, option, styles, key, index, i;
 
@@ -360,22 +446,37 @@ TSOptions.prototype.deleteUrl = function(url) {
 	}
 
 	// load something else
-	me.loadASetting();
+	if (reload)
+		me.loadASetting("url");
 
 	// delete
 	chrome.storage.sync.remove(url);
 }
 
-TSOptions.prototype.removeStyleFromUrl = function(node, url) {
+TSOptions.prototype.removeStyleFromUrl = function(node) {
 	var me = this,
 		entry = {},
-		index, style, styleName;
+		index, style, styleName, parent, url, list, dropdown, option;
 
-	// update DOM
-	styleName = node.parentNode.previousElementSibling.innerHTML;
+	if (me.editMode === "url") {
+		list = me.pageStyleList;
+		dropdown = me.styleDropdown;
+		styleName = node.parentNode.previousElementSibling.innerHTML;
+		url = me.activeItem;
+		option = styleName;
+		parent = node.parentNode.parentNode;	// this is not ideal...
+	}
+	else {
+		list = me.styleUrlList;
+		dropdown = me.styleDropdown;
+		url = node.previousElementSibling.innerHTML;
+		styleName = me.activeItem;
+		option = url;
+		parent = node.parentNode;
+	}
 
-	me.pageStyleList.removeChild(node.parentNode.parentNode);	// this is not ideal...
-	me.addOption(styleName, styleName, me.styleDropdown);
+	list.removeChild(parent);
+	me.addOption(option, option, dropdown);
 
 	// update URL settings
 	index = me.savedUrls[url].indexOf(styleName);
@@ -414,7 +515,7 @@ TSOptions.prototype.saveUrl = function() {
 			styles = me.savedUrls[me.activeItem];
 			me.addNewUrl(newUrl, styles, true, me.activeItemNode);
 			index = Array.prototype.indexOf.call(me.urlList.childNodes, me.activeItemNode) - 1;
-			me.deleteUrl(me.activeItem);
+			me.deleteUrl(me.activeItem, false);
 			me.selectSidebarItem(me.urlList.childNodes.item(index), newUrl);
 		}
 
@@ -449,9 +550,6 @@ TSOptions.prototype.addOption = function(value, text, dropdown) {
  */
 TSOptions.prototype.addToList = function(name, template, list, dropdown) {
 	var me = this;
-
-	//console.log(name, template, list, dropdown);
-
 	var node = template.cloneNode(true);
 
 	node.classList.remove("template");
@@ -673,8 +771,6 @@ TSOptions.prototype.loadSettings = function(callback) {
 		styles = storage.styles;
 		me.storageStyles = styles;
 
-		console.log(storage);
-
 		// save the styles
 		for (key in styles) {
 			if (styles.hasOwnProperty(key)) {
@@ -702,18 +798,18 @@ TSOptions.prototype.loadSettings = function(callback) {
 	});
 }
 
-TSOptions.prototype.loadASetting = function() {
-	var me = this;
+TSOptions.prototype.loadASetting = function(type) {
+	var me = this,
+		firstUrl = me.urlList.getElementsByTagName("li")[0],
+		firstStyle = me.styleList.getElementsByTagName("li")[0];
 
-	var firstItem;
-
-	if (firstItem = me.urlList.getElementsByTagName("li")[0]) {
-		me.selectSidebarItem(firstItem, firstItem.innerHTML);
-		me.loadUrl(firstItem.innerHTML);
+	if (firstUrl && (type === "url" || !type || !firstStyle)) {
+		me.selectSidebarItem(firstUrl, firstUrl.innerHTML);
+		me.loadUrl(firstUrl.innerHTML);		
 	}
-	else if (firstItem = me.styleList.getElementsByTagName("li")[0]) {
-		me.selectSidebarItem(firstItem, firstItem.innerHTML);
-		me.loadStyle(firstItem.innerHTML);
+	else if (firstStyle && (type === "style" || !type || !firstUrl)) {
+		me.selectSidebarItem(firstStyle, firstStyle.innerHTML);
+		me.loadStyle(firstStyle.innerHTML);
 	}
 	else {
 		me.editing.innerHTML = "You have nothing saved";
