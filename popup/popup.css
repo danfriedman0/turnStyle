@@ -86,3 +86,8 @@ textarea {
 #style-name-input {
 	margin-top: .2em;
 }
+
+#open-options {
+	text-align: center;
+	font-weight: bold;
+}

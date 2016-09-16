@@ -139,6 +139,10 @@ TSPopup.prototype.addListeners = function() {
 		else
 			me.saveStyle(styleName, styleRules);
 	});
+
+	document.getElementById("open-options-link").addEventListener("click", function() {
+		chrome.runtime.openOptionsPage();
+	});
 }
 
 /****************************************************************************************************
