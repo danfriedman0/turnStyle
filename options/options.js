@@ -91,7 +91,12 @@ TSOptions.prototype.addListeners = function() {
 	document.getElementById("append-importants").addEventListener("click", function() {
 		me.appendImportants();
 	});
+
+	document.getElementById("save-style").addEventListener("click", function() {
+		me.saveStyle();
+	});
 }
+
 
 /****************************************************************************************************
  ** Handle user input  ******************************************************************************
@@ -103,6 +108,39 @@ TSOptions.prototype.escapeHtml = function(unsafe) {
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;");
+}
+
+// append an error message to the specified node
+TSOptions.prototype.appendError = function(errorMessage, node) {
+	// only show one error message at a time
+	this.clearErrorMessage();
+
+	var error = document.createElement("div");
+	error.id = "error-message";
+	error.innerHTML = errorMessage;
+	node.parentNode.insertBefore(error, node.nextElementSibling);
+}
+
+/****************************************************************************************************
+ ** Save changes  ***********************************************************************************
+ ****************************************************************************************************/
+
+TSOptions.prototype.saveStyle = function() {
+	var me = this;
+	var styleName = me.escapeHtml(me.styleNameInput.value);
+	var styleRules = me.escapeHtml(me.styleRulesInput.value);
+
+	if (!styleName) {
+		me.appendError("You should give your style a name", me.styleNameInput);
+	}
+	else if (!styleRules) {
+		me.appendError("You should add some rules", me.styleRulesInput);
+	}
+	// else if (me.editMode == "url") {
+	// 	// ask for confirmation if the name has changed
+	// 	if (styleName !== )
+
+	// }
 }
 
 
@@ -128,7 +166,10 @@ TSOptions.prototype.addOption = function(value, text, dropDown) {
 TSOptions.prototype.addToList = function(name, template, list, dropDown) {
 	var me = this;
 
+	//console.log(name, template, list, dropDown);
+
 	var node = template.cloneNode(true);
+
 	node.classList.remove("template");
 	node.getElementsByClassName("name")[0].innerHTML = name;
 	list.insertBefore(node, template);
@@ -143,11 +184,11 @@ TSOptions.prototype.addToList = function(name, template, list, dropDown) {
  * remove the node from the active list (i.e. active styles or active sites),
  *	finds the name, and adds the name back to the dropDown
  */
-TSOptions.prototype.removeFromActiveList = function(node, dropDown) {
-	var name = node.getElementsByClassName("name")[0].innerHTML;
-	node.parentNode.removeChild(node);
-	this.addOption(name, name, dropDown);
-}
+// TSOptions.prototype.removeFromActiveList = function(node, dropDown) {
+// 	var name = node.getElementsByClassName("name")[0].innerHTML;
+// 	node.parentNode.removeChild(node);
+// 	this.addOption(name, name, dropDown);
+// }
 
 // append a list element ( <li [tabindex="0"] [class="className"]>item</li> ) to list
 TSOptions.prototype.appendToSidebarList = function(list, item, focusable, className) {
@@ -191,20 +232,23 @@ TSOptions.prototype.appendImportants = function() {
 // clear the list of active styles or active pages (depending on the mode)
 TSOptions.prototype.clearActiveList = function(mode) {
 	var me = this,
-		nodes, dropDown;
+		nodes, dropDown, list, name;
 
 	if (mode === "url") {
 		nodes = document.getElementsByClassName("page-style");
+		list = me.pageStyleList;
 		dropDown = me.styleDropDown;
 	}
 	else {
 		nodes = document.getElementsByClassName("style-url");
+		list = me.styleUrlList;
 		dropDown = me.urlDropDown;
 	}
 
-	for (var i = 0; i < nodes.length; i++) {
-		if (!nodes[i].classList.contains("template"))
-			me.removeFromActiveList(nodes[i], dropDown);
+	for (var i = nodes.length - 2; i >= 0; i--) {		// subtract 2 to skip the template node
+		name = nodes[i].getElementsByClassName("name")[0].innerHTML
+		list.removeChild(nodes[i]);
+		me.addOption(name, name, dropDown);			
 	}
 }
 
