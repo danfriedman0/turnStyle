@@ -294,7 +294,7 @@ TSPopup.prototype.openStyleEditor = function(styleName) {
 	me.clearErrorMessage();
 	var styleRules = me.styles[styleName];
 	if (!styleRules)
-		styleName = styleRules = "";
+		styleRules = "";
 	me.styleNameInput.value = styleName;
 	me.styleRulesInput.value = styleRules;
 	me.styleEditor.style.display = "block";
