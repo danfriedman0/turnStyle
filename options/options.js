@@ -39,6 +39,13 @@ var TSOptions = function() {
 	this.urlSelector = document.getElementById("url-selector");
 	this.urlDropdown = document.getElementById("url-dropdown");
 
+	// popup
+	this.popup = document.getElementById("popup-wrapper");
+	this.popupMessage = document.getElementById("popup-message");
+	this.popupButtons = document.getElementById("popup-buttons");
+	this.closePopup = document.getElementById("close-popup");
+
+
 	this.savedUrls = {};
 	this.savedStyles = {};			// this styles object maps all the styles to their active URLs
 	this.storageStyles = {};		// this is the styles object to put in storage
@@ -150,8 +157,10 @@ TSOptions.prototype.addListeners = function() {
 
 	document.getElementById("delete-url").addEventListener("click", function() {
 		var url = me.activeItem;
-		if (confirm("Are you sure you want to delete your settings for " + url + "?"))
-			me.deleteUrl(url, true);
+		me.confirm("Are you sure you want to delete your settings for " + url + "?", function(response) {
+			if (response)
+				me.deleteUrl(url, true);
+		});
 	});
 
 	document.getElementById("delete-style").addEventListener("click", function() {
@@ -226,6 +235,41 @@ TSOptions.prototype.validateUrl = function(url) {
 	// https://gist.github.com/dperini/729294
     // see also https://mathiasbynens.be/demo/url-regex
 	return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(url);
+}
+
+TSOptions.prototype.confirm = function(message, callback) {
+	var me = this,
+		clone, confirmPopup;
+
+	// clone the buttons to clear event listeners
+	clone = me.closePopup.cloneNode(true);
+	me.closePopup.parentNode.replaceChild(clone, me.closePopup);
+	me.closePopup = clone;
+	clone = me.popupButtons.cloneNode(true);
+	me.popupButtons.parentNode.replaceChild(clone, me.popupButtons);
+	me.popupButtons = clone;
+
+	me.popupMessage.innerHTML = message;
+
+	// bind new events
+	me.closePopup.addEventListener("click", function() {
+		me.popup.classList.add("hide");
+		callback(false);
+	});
+
+	document.getElementById("cancel-popup").addEventListener("click", function() {
+		me.popup.classList.add("hide");
+		callback(false);		
+	});
+
+	confirmPopup = document.getElementById("confirm-popup");
+	confirmPopup.addEventListener("click", function() {
+		me.popup.classList.add("hide");
+		callback(true);		
+	});
+
+	me.popup.classList.remove("hide");
+	confirmPopup.focus();
 }
 
 /****************************************************************************************************
