@@ -225,6 +225,7 @@ select {
 #popup-buttons {
 	width: 50%;
 	margin: 0 auto;
+	justify-content: space-around;
 }
 
 
