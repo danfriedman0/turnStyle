@@ -33,10 +33,11 @@ var TSOptions = function() {
 	this.urlDropDown = document.getElementById("url-dropdown");
 
 	this.savedUrls = {};
-	this.savedStyles = {};
+	this.savedStyles = {};			// this styles object maps all the styles to their active URLs
+	this.storageStyles = {};		// this is the styles object to put in storage
 
-	this.activeItem = null;
-	this.activeItemNode = null;
+	this.activeItem = null;			// selected style or url
+	this.activeItemNode = null;		// sidebar node for the selected style or url
 	this.editMode = null;			// "style" or "url"
 
 	this.initialize();
@@ -93,7 +94,13 @@ TSOptions.prototype.addListeners = function() {
 	});
 
 	document.getElementById("save-style").addEventListener("click", function() {
-		me.saveStyle();
+		if (me.editMode === "url")	
+			me.saveUrlStyle();
+	});
+
+	document.getElementById("delete-url").addEventListener("click", function() {
+		var url = me.activeItem;
+		me.deleteUrl(url);
 	});
 }
 
@@ -125,10 +132,19 @@ TSOptions.prototype.appendError = function(errorMessage, node) {
  ** Save changes  ***********************************************************************************
  ****************************************************************************************************/
 
-TSOptions.prototype.saveStyle = function() {
+TSOptions.prototype.saveStyle = function(name, rules) {
 	var me = this;
-	var styleName = me.escapeHtml(me.styleNameInput.value);
-	var styleRules = me.escapeHtml(me.styleRulesInput.value);
+	me.storageStyles[name] = rules;
+	chrome.storage.sync.set({"styles": me.storageStyles});
+}
+
+TSOptions.prototype.saveUrlStyle = function() {
+	var me = this,
+		styleName = me.escapeHtml(me.styleNameInput.value),
+		styleRules = me.escapeHtml(me.styleRulesInput.value),
+		url = me.activeItem,
+		pageStyles = me.savedUrls[url],
+		entry = {};
 
 	if (!styleName) {
 		me.appendError("You should give your style a name", me.styleNameInput);
@@ -136,11 +152,61 @@ TSOptions.prototype.saveStyle = function() {
 	else if (!styleRules) {
 		me.appendError("You should add some rules", me.styleRulesInput);
 	}
-	// else if (me.editMode == "url") {
-	// 	// ask for confirmation if the name has changed
-	// 	if (styleName !== )
 
-	// }
+	// the style has already been added to this page
+	else if (pageStyles.indexOf(styleName) > -1) {
+		me.saveStyle(styleName, styleRules);
+		me.savedStyles[styleName].rules = styleRules;
+		me.styleEditor.classList.add("hide");
+	}
+
+	else {
+		me.saveStyle(styleName, styleRules);
+		me.addToList(styleName, me.pageStyleTemplate, me.pageStyleList, me.styleDropDown);
+		if (me.savedStyles[styleName])
+			me.savedStyles[styleName].urls.push(url);
+		
+		pageStyles.push(styleName);
+		entry[url] = pageStyles;
+		chrome.storage.sync.set(entry);
+		
+		me.styleEditor.classList.add("hide");
+	}
+}
+
+TSOptions.prototype.deleteUrl = function(url) {
+	var me = this,
+		nodes, option, styles, key, index, i;
+
+	// remove from sidebar
+	nodes = document.getElementsByClassName("sidebar-url");
+	for (i = 0; i < nodes.length; i++) {
+		if (nodes[i].innerHTML === "url") {
+			me.urlList.removeChild(nodes[i]);
+			break;
+		}
+	}
+
+	// remove from dropdown
+	option = me.urlDropDown.querySelector("option[value='" + url + "']");
+	if (option)
+		option.parentNode.removeChild(option);
+
+	// go through the saved styles and remove all references to this URL
+	styles = me.savedStyles;
+	for (key in styles) {
+		if (styles.hasOwnProperty(key)) {
+			index = styles[key].urls.indexOf(url);
+			if (index > -1)
+				styles[key].urls.splice(index, 1);
+		}
+	}
+
+	// load something else
+	me.loadASetting();
+
+	// delete
+	chrome.storage.sync.remove(url);
 }
 
 
@@ -179,16 +245,6 @@ TSOptions.prototype.addToList = function(name, template, list, dropDown) {
 	if (option)
 		option.parentNode.removeChild(option);
 }
-
-/**
- * remove the node from the active list (i.e. active styles or active sites),
- *	finds the name, and adds the name back to the dropDown
- */
-// TSOptions.prototype.removeFromActiveList = function(node, dropDown) {
-// 	var name = node.getElementsByClassName("name")[0].innerHTML;
-// 	node.parentNode.removeChild(node);
-// 	this.addOption(name, name, dropDown);
-// }
 
 // append a list element ( <li [tabindex="0"] [class="className"]>item</li> ) to list
 TSOptions.prototype.appendToSidebarList = function(list, item, focusable, className) {
@@ -392,6 +448,7 @@ TSOptions.prototype.loadSettings = function(callback) {
 
 	chrome.storage.sync.get(null, function(storage) {
 		styles = storage.styles;
+		me.storageStyles = styles;
 
 		// save the styles
 		for (key in styles) {
@@ -420,15 +477,8 @@ TSOptions.prototype.loadSettings = function(callback) {
 	});
 }
 
-/****************************************************************************************************
- ** Initialize **************************************************************************************
- ****************************************************************************************************/
-
-
-TSOptions.prototype.initializePage = function() {
+TSOptions.prototype.loadASetting = function() {
 	var me = this;
-	me.loadSidebar();
-	me.fillDropDowns();
 
 	var firstItem;
 
@@ -441,8 +491,20 @@ TSOptions.prototype.initializePage = function() {
 		me.loadStyle(firstItem.innerHTML);
 	}
 	else {
-		me.editing.innerHTML = "You haven't added any styles yet";
+		me.editing.innerHTML = "You have nothing saved";
 	}
+}
+
+/****************************************************************************************************
+ ** Initialize **************************************************************************************
+ ****************************************************************************************************/
+
+
+TSOptions.prototype.initializePage = function() {
+	var me = this;
+	me.loadSidebar();
+	me.fillDropDowns();
+	me.loadASetting();
 
 	me.addListeners();
 }
