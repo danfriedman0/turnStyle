@@ -1,0 +1,79 @@
+/**
+ * popup.css
+ * styles for the turnStyle popup
+ */
+
+body {
+	width: 284px;
+	font-size: 100%;
+}
+
+h4 {
+	margin: 0;
+}
+
+p, a, .style-name {
+	font-size: .8em;
+	text-align: left;
+}
+
+label {
+	margin-right: 15px;
+}
+
+ul {
+	list-style: none;
+	padding: 0 10px;
+	margin: 0;
+}
+
+.flexbox {
+	display: flex;
+	justify-content: space-between;
+}
+
+.small-text {
+	font-size: .7em;
+}
+
+.fixed-height {
+	min-height: 1.5em;
+}
+
+.template {
+	display: none;
+}
+
+.style-name {
+	font-weight: bold;
+}
+
+#error-message {
+	font-size: .7em;
+	color: #f00;
+	margin-bottom: 4px;
+}
+
+#style-selector {
+	align-items: center;
+	font-size: .8em;
+	margin-top: 1em;
+}
+
+#close-button {
+	text-align: right;
+	margin-bottom: 4px;
+}
+
+#page-url {
+	font-style: italic;
+	font-weight: bold;
+}
+
+#page-url-input {
+	display: none;
+}
+
+#style-editor {
+	display: none;
+}

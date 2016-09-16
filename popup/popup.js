@@ -9,8 +9,6 @@ var TSPopup = function() {
 	this.previewStyle = document.getElementById("preview-style");
 	this.clearStyle = document.getElementById("clear-style");
 	this.saveStyle = document.getElementById("save-style");
-	this.clearSettings = document.getElementById("clear-settings");
-	this.clearAll = document.getElementById("clear-all");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
 	this.styleDropDown = document.getElementById("style-dropdown");
@@ -82,14 +80,6 @@ TSPopup.prototype.addListeners = function() {
 			me.styleDropDown.value = "";
 		}
 		me.clearPreview();
-	});
-
-	me.clearSettings.addEventListener("click", function() {
-		me.sendRequest({instruction: "clear settings"});
-	});
-
-	me.clearAll.addEventListener("click", function() {
-		me.sendRequest({instruction: "clear all"});
 	});
 
 	me.styleDropDown.addEventListener("change", function() {
@@ -319,6 +309,10 @@ TSPopup.prototype.initialize = function() {
 	var me = this;
 	me.addListeners();
 	me.sendRequest({instruction: "getPageSettings"}, me.loadSettings, me);
+
+	chrome.storage.sync.get(null, function(storage) {
+		console.log(storage);
+	})
 }
 
 var popup = new TSPopup();

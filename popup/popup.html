@@ -1,66 +1,9 @@
 <!doctype html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>turnStyle</title>
-		<style>
-			body {
-				width: 284px;
-				font-size: 100%;
-			}
-			h4 {
-				margin: 0;
-			}
-			p, a, .style-name {
-				font-size: .8em;
-    		text-align: left;
-			}
-			label {
-				margin-right: 15px;
-			}
-			.small-text {
-				font-size: .7em;
-			}
-			#error-message {
-				font-size: .7em;
-				color: #f00;
-				margin-bottom: 4px;
-			}
-			ul {
-				list-style: none;
-				padding: 0 10px;
-				margin: 0;
-			}
-			.style-name {
-				font-weight: bold;
-			}
-			.flexbox {
-				display: flex;
-				justify-content: space-between;
-			}
-			#style-selector {
-				align-items: center;
-			}
-			.template {
-				display: none;
-			}
-			#close-button {
-				text-align: right;
-				margin-bottom: 4px;
-			}
-			#page-url {
-				font-style: italic;
-				font-weight: bold;
-			}
-			#page-url-input {
-				display: none;
-			}
-			.fixed-height {
-				min-height: 1.5em;
-			}
-			#style-editor {
-				display: none;
-			}
-		</style>
+		<link rel="stylesheet" href="popup.css">
 	</head>
 	<body>
 		<h4>turnStyle</h4>
@@ -87,19 +30,18 @@
 					<a class="remove-style" href="#">remove</a>
 				</div>
 			</li>
-		</ul>
-		
-		<hr>
-		
+		</ul><!-- #style-list -->
+
 		<div id="style-selector" class="flexbox">
-			<p id="message">Add a style: </p>
+			<div id="message">Add a style: </div>
 			<select id="style-dropdown">
 				<option value=""></option>
 				<option value="new-style">Write a new style</option>
 			</select>
-		</div>
+		</div><!-- #style-selector -->
 
 		<div id="style-editor" class="hide">
+			<hr>
 			<div id="close-button">
 				<button id="close-editor">close style editor</button>
 			</div>
@@ -115,15 +57,7 @@
 					<button id="save-style">save</button>
 				</div>
 			</div>
-		</div>
-		
-		<hr>
-		
-		<div id="dev-buttons">
-			<button id="restyle-default">default</button>
-			<button id="clear-settings">clear site settings</button>
-			<button id="clear-all">clear all settings</button>
-		</div>
+		</div><!-- #style-editor -->
 
 		<script src="popup.js"></script>
 	</body>
