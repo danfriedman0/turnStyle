@@ -29,6 +29,8 @@ var TSOptions = function() {
 
 	// style info
 	this.styleButtons = document.getElementById("style-buttons");
+	this.renameStyleButton = document.getElementById("rename-style");
+	this.saveStyleNameButton = document.getElementById("save-style-name");
 	this.styleUrls = document.getElementById("style-urls");
 	this.styleUrlList = document.getElementById("style-url-list");
 	this.styleUrlTemplate = document.getElementsByClassName("style-url template")[0];
@@ -101,6 +103,14 @@ TSOptions.prototype.addListeners = function() {
 		me.saveUrl();
 	});
 
+	me.renameStyleButton.addEventListener("click", function() {
+		me.renameStyle();
+	});
+
+	me.saveStyleNameButton.addEventListener("click", function() {
+		me.saveStyleName();
+	});
+
 	document.getElementById("close-editor").addEventListener("click", function() {
 		me.styleEditor.classList.add("hide");
 	});
@@ -118,6 +128,12 @@ TSOptions.prototype.addListeners = function() {
 	document.getElementById("delete-url").addEventListener("click", function() {
 		var url = me.activeItem;
 		me.deleteUrl(url);
+	});
+
+	document.getElementById("delete-style").addEventListener("click", function() {
+		var styleName = me.activeItem;
+		if (confirm("Are you sure you want to delete " + styleName + "?"))
+			me.deleteStyle(styleName);
 	});
 }
 
@@ -156,6 +172,8 @@ TSOptions.prototype.validateUrl = function(url) {
  ** Save changes  ***********************************************************************************
  ****************************************************************************************************/
 
+/** Style changes ***********************************************************************************/
+
 TSOptions.prototype.saveStyle = function(name, rules) {
 	var me = this;
 	me.storageStyles[name] = rules;
@@ -177,6 +195,83 @@ TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown) {
 
 	me.saveStyle(name, rules);
 }
+
+TSOptions.prototype.deleteStyle = function(styleName) {
+	var me = this,
+		entry = {},
+		nodes, option, urls, key, index, i;
+
+
+	// remove from sidebar
+	nodes = document.getElementsByClassName("sidebar-style");
+	for (i = 0; i < nodes.length; i++) {
+		if (nodes[i].innerHTML === styleName) {
+			me.styleList.removeChild(nodes[i]);
+			break;
+		}
+	}
+
+	// remove from dropdown
+	option = me.styleDropdown.querySelector("option[value='" + styleName + "']");
+	if (option)
+		option.parentNode.removeChild(option);
+
+	// go through the saved URLs and remove all references to this style
+	urls = me.savedUrls;
+	for (key in urls) {
+		if (urls.hasOwnProperty(key)) {
+			index = urls[key].indexOf(styleName);
+			if (index > -1) {
+				urls[key].splice(index, 1);
+				entry[key] = urls[key];
+			}
+		}
+	}
+
+	// load something else
+	me.loadASetting();
+
+	delete me.savedStyles[styleName];
+	delete me.storageStyles[styleName];
+	entry["styles"] = me.storageStyles;
+
+	// save all the new settings
+	chrome.storage.sync.set(entry, function() {
+		chrome.storage.sync.get(null, function(storage) {
+			console.log(storage);
+		});
+	});
+}
+
+
+
+
+TSOptions.prototype.renameStyle = function() {
+	var me = this;
+
+	me.editing.classList.add("hide");
+	me.editingInput.value = me.activeItem;
+	me.editingInput.classList.remove("hide");
+	me.editingInput.focus();
+	me.renameStyleButton.disabled = true;
+	me.saveStyleNameButton.disabled = false;
+}
+
+TSOptions.prototype.saveStyleName = function() {
+	var me = this,
+		styleName = me.escapeHtml(me.editingInput.value);
+
+	me.editing.innerHTML = styleName;
+	me.editing.classList.remove("hide");
+	me.editingInput.classList.add("hide");
+	me.saveUrlButton.disabled = true;
+	me.editUrlButton.disabled = false;	
+}
+
+
+
+/** URL changes *************************************************************************************/
+
 
 TSOptions.prototype.addNewUrl = function(url, styles, addToDropdown, targetNode) {
 	var me = this,
@@ -318,7 +413,7 @@ TSOptions.prototype.saveUrl = function() {
 		if (newUrl !== me.activeItem) {
 			styles = me.savedUrls[me.activeItem];
 			me.addNewUrl(newUrl, styles, true, me.activeItemNode);
-			index = Array.prototype.indexOf.call(me.urlList.childNodes, me.activeItemNode)-1;
+			index = Array.prototype.indexOf.call(me.urlList.childNodes, me.activeItemNode) - 1;
 			me.deleteUrl(me.activeItem);
 			me.selectSidebarItem(me.urlList.childNodes.item(index), newUrl);
 		}
@@ -577,6 +672,8 @@ TSOptions.prototype.loadSettings = function(callback) {
 	chrome.storage.sync.get(null, function(storage) {
 		styles = storage.styles;
 		me.storageStyles = styles;
+
+		console.log(storage);
 
 		// save the styles
 		for (key in styles) {
