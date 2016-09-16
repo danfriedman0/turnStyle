@@ -1,6 +1,5 @@
 /**
  * turnstyle.js
- * Dan Friedman
  *
  * Content script for the turnStyle extension. Whenever a page loads, this file looks in chrome.storage
  * to see if any settings have been saved for that site and restyles the page if it finds anything. It
@@ -19,47 +18,11 @@ var TurnStyle = function() {
 	this.initialize();
 }
 
-/**
- * loadStyles: load all saved styles into the styles object
- */
-TurnStyle.prototype.loadSettings = function() {
-	var me = this,
-		fullUrl = this.fullUrl,
-		matches = [],
-		re, styleRules, pageStyles;
+/****************************************************************************************************
+ ** Add or remove styles from the page **************************************************************
+ ****************************************************************************************************/
 
-	chrome.storage.sync.get(null, function(storage) {
-		for (var key in storage) {
-			if (storage.hasOwnProperty(key)) {
-				if (key === "styles") {
-					me.styles = storage.styles;
-				}
-				else {
-					re = new RegExp("^" + key);
-					if (fullUrl.match(re))
-						matches.push(key);					
-				}
-			}
-		}
-
-		if (matches) {
-			me.activeUrl = matches.sort()[matches.length-1];
-			pageStyles = storage[me.activeUrl];
-			if (pageStyles) {
-				me.pageStyles = pageStyles;
-				pageStyles.forEach(function(styleName) {
-					styleRules = me.styles[styleName];
-					if (styleRules)
-						me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
-				});				
-			}
-		}
-	});
-}
-
-/**
- * addStyleToPage: override the page's style by inserting the css rules with optional class name and id
- */
+// override the page's style by inserting the css rules with optional class name and id
 TurnStyle.prototype.addStyleToPage = function(styleRules, styleId, className) {
 	if (styleRules) {
 		var node = document.createElement("style");
@@ -73,10 +36,8 @@ TurnStyle.prototype.addStyleToPage = function(styleRules, styleId, className) {
 	}
 }
 
-/**
- * removeStyleFromPage: remove all styles with the specified id or class name
- *	if no arguments are passed, remove all style elements with the "turnstyle" class
- */
+// remove all styles with the specified id or class name
+// if no arguments are passed, remove all style elements with the "turnstyle" class
 TurnStyle.prototype.removeStyleFromPage = function(styleId, className) {
 	if (styleId) {
 		var styleNode = document.getElementById(styleId);
@@ -92,9 +53,19 @@ TurnStyle.prototype.removeStyleFromPage = function(styleId, className) {
 	}
 }
 
-/**
- * setPageStyle: save the style for this website in chrome storage
- */
+// remove the style with the specified id from page and replace it with an updated version
+TurnStyle.prototype.editStyle = function(styleName, styleRules) {
+	var styleId = styleName.replace(/ /g, "-");
+	this.removeStyleFromPage(styleId);
+	this.addStyleToPage(styleRules, styleId);
+	this.saveStyle(styleName, styleRules, true);
+}
+
+/****************************************************************************************************
+ ** Save settings in storage ************************************************************************
+ ****************************************************************************************************/
+
+// add the style to the active URL's list of saved styles
 TurnStyle.prototype.setPageStyle = function(styleName) {
 	var activeUrl = this.activeUrl;
 	if (activeUrl !== "styles") {			// make sure we don't overwrite the styles field
@@ -105,6 +76,7 @@ TurnStyle.prototype.setPageStyle = function(styleName) {
 	}
 }
 
+// remove the style from the active URL's list of saved styles
 TurnStyle.prototype.unsetPageStyle = function(styleName) {
 	var activeUrl = this.activeUrl;
 	var index = this.pageStyles.indexOf(styleName);
@@ -116,11 +88,8 @@ TurnStyle.prototype.unsetPageStyle = function(styleName) {
 	}
 }	
 
-
-/**
- * saveStyle: save the style in the styles object in storage
- *	overwrite the existing style if overwrite is set to true
- */
+// save the style in the styles object in storage
+// overwrite the existing style if overwrite is set to true
 TurnStyle.prototype.saveStyle = function(styleName, styleRules, overWrite) {
 	var styles = this.styles;
 	if (overWrite || !styles[styleName]) {
@@ -129,12 +98,9 @@ TurnStyle.prototype.saveStyle = function(styleName, styleRules, overWrite) {
 	}
 }
 
-TurnStyle.prototype.editStyle = function(styleName, styleRules) {
-	var styleId = styleName.replace(/ /g, "-");
-	this.removeStyleFromPage(styleId);
-	this.addStyleToPage(styleRules, styleId);
-	this.saveStyle(styleName, styleRules, true);
-}
+/****************************************************************************************************
+ ** Manage storage (for development) ****************************************************************
+ ****************************************************************************************************/
 
 /**
  * clearStorage: clear any of the settings saved for this website
@@ -163,6 +129,10 @@ TurnStyle.prototype.getStorageInfo = function() {
 		console.log(storage);
 	});
 }
+
+/****************************************************************************************************
+ ** Messaging ***************************************************************************************
+ ****************************************************************************************************/
 
 // listen for messages from popup.js
 TurnStyle.prototype.addListener = function() {
@@ -222,6 +192,49 @@ TurnStyle.prototype.addListener = function() {
 	});	
 }
 
+/****************************************************************************************************
+ ** Initialize **************************************************************************************
+ ****************************************************************************************************/
+
+// load all saved styles into the styles object
+TurnStyle.prototype.loadSettings = function() {
+	var me = this,
+		fullUrl = this.fullUrl,
+		matches = [],
+		re, styleRules, pageStyles;
+
+	chrome.storage.sync.get(null, function(storage) {
+
+		// record all of the urls that match this page's url in some way
+		for (var key in storage) {
+			if (storage.hasOwnProperty(key)) {
+				if (key === "styles") {
+					me.styles = storage.styles;
+				}
+				else {
+					re = new RegExp("^" + key);
+					if (fullUrl.match(re))
+						matches.push(key);					
+				}
+			}
+		}
+
+		// if any of the url's match, use the longest one (i.e., the closest match) as the
+		// active url
+		if (matches) {
+			me.activeUrl = matches.sort()[matches.length-1];
+			pageStyles = storage[me.activeUrl];
+			if (pageStyles) {
+				me.pageStyles = pageStyles;
+				pageStyles.forEach(function(styleName) {
+					styleRules = me.styles[styleName];
+					if (styleRules)
+						me.addStyleToPage(styleRules, styleName.replace(/ /g, "-"));
+				});				
+			}
+		}
+	});
+}
 
 TurnStyle.prototype.initialize = function() {
 	this.loadSettings();
