@@ -12,17 +12,20 @@ var TSOptions = function() {
 
 	// editor
 	this.editing = document.getElementById("editing-name");
+	this.editingInput = document.getElementById("editing-name-input");
 	this.styleEditor = document.getElementById("style-editor");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
 
 	// URL info
 	this.urlButtons = document.getElementById("url-buttons");
+	this.editUrlButton = document.getElementById("edit-url");
+	this.saveUrlButton = document.getElementById("save-url");
 	this.pageStyles = document.getElementById("page-styles");
 	this.pageStyleList = document.getElementById("page-style-list");
 	this.pageStyleTemplate = document.getElementsByClassName("page-style template")[0];
 	this.styleSelector = document.getElementById("style-selector");
-	this.styleDropDown = document.getElementById("style-dropdown");
+	this.styleDropdown = document.getElementById("style-dropdown");
 
 	// style info
 	this.styleButtons = document.getElementById("style-buttons");
@@ -30,7 +33,7 @@ var TSOptions = function() {
 	this.styleUrlList = document.getElementById("style-url-list");
 	this.styleUrlTemplate = document.getElementsByClassName("style-url template")[0];
 	this.urlSelector = document.getElementById("url-selector");
-	this.urlDropDown = document.getElementById("url-dropdown");
+	this.urlDropdown = document.getElementById("url-dropdown");
 
 	this.savedUrls = {};
 	this.savedStyles = {};			// this styles object maps all the styles to their active URLs
@@ -83,14 +86,23 @@ TSOptions.prototype.addListeners = function() {
 
 	});
 
-	document.getElementById("close-editor").addEventListener("click", function() {
-		me.styleEditor.classList.add("hide");
+	me.styleDropdown.addEventListener("change", function() {
+		var styleName = this.value;
+		if (styleName) {
+			me.openStyleEditor(styleName);
+		}
 	});
 
-	document.getElementById("style-dropdown").addEventListener("change", function() {
-		var styleName = this.value;
-		if (styleName)
-			me.openStyleEditor(styleName);
+	me.editUrlButton.addEventListener("click", function() {
+		me.editUrl();
+	});
+
+	me.saveUrlButton.addEventListener("click", function() {
+		me.saveUrl();
+	});
+
+	document.getElementById("close-editor").addEventListener("click", function() {
+		me.styleEditor.classList.add("hide");
 	});
 
 	document.getElementById("append-importants").addEventListener("click", function() {
@@ -100,6 +112,7 @@ TSOptions.prototype.addListeners = function() {
 	document.getElementById("save-style").addEventListener("click", function() {
 		if (me.editMode === "url")	
 			me.saveUrlStyle();
+		me.styleDropdown.value = "";
 	});
 
 	document.getElementById("delete-url").addEventListener("click", function() {
@@ -132,6 +145,13 @@ TSOptions.prototype.appendError = function(errorMessage, node) {
 	node.parentNode.insertBefore(error, node.nextElementSibling);
 }
 
+TSOptions.prototype.validateUrl = function(url) {
+	// Copyright (c) 2010-2013 Diego Perini, MIT licensed
+	// https://gist.github.com/dperini/729294
+    // see also https://mathiasbynens.be/demo/url-regex
+	return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(url);
+}
+
 /****************************************************************************************************
  ** Save changes  ***********************************************************************************
  ****************************************************************************************************/
@@ -140,6 +160,40 @@ TSOptions.prototype.saveStyle = function(name, rules) {
 	var me = this;
 	me.storageStyles[name] = rules;
 	chrome.storage.sync.set({"styles": me.storageStyles});
+}
+
+TSOptions.prototype.addNewStyle = function(name, rules, addToDropdown) {
+	var me = this;
+
+	me.savedStyles[name] = {
+		urls: [],
+		rules: rules
+	};
+
+	me.appendToSidebarList(me.styleList, name, true, "sidebar-style");
+
+	if (addToDropdown)
+		me.addOption(name, name, me.styleDropdown);
+
+	me.saveStyle(name, rules);
+}
+
+TSOptions.prototype.addNewUrl = function(url, styles, addToDropdown, targetNode) {
+	var me = this,
+		entry = {};
+
+	me.savedUrls[url] = styles;
+	me.appendToSidebarList(me.urlList, url, true, "sidebar-url", targetNode);
+
+	if (addToDropdown)
+		me.addOption(url, url, me.urlDropdown);
+
+	styles.forEach(function(style) {
+		me.savedStyles[style].urls.push(url);
+	});
+
+	entry[url] = styles;
+	chrome.storage.sync.set(entry);
 }
 
 TSOptions.prototype.saveUrlStyle = function() {
@@ -166,9 +220,13 @@ TSOptions.prototype.saveUrlStyle = function() {
 
 	else {
 		me.saveStyle(styleName, styleRules);
-		me.addToList(styleName, me.pageStyleTemplate, me.pageStyleList, me.styleDropDown);
-		if (me.savedStyles[styleName])
-			me.savedStyles[styleName].urls.push(url);
+		me.addToList(styleName, me.pageStyleTemplate, me.pageStyleList, me.styleDropdown);
+		
+		// save the style if it's new
+		if (!me.savedStyles[styleName])
+			me.addNewStyle(styleName, styleRules);
+		
+		me.savedStyles[styleName].urls.push(url);
 		
 		pageStyles.push(styleName);
 		entry[url] = pageStyles;
@@ -185,14 +243,14 @@ TSOptions.prototype.deleteUrl = function(url) {
 	// remove from sidebar
 	nodes = document.getElementsByClassName("sidebar-url");
 	for (i = 0; i < nodes.length; i++) {
-		if (nodes[i].innerHTML === "url") {
+		if (nodes[i].innerHTML === url) {
 			me.urlList.removeChild(nodes[i]);
 			break;
 		}
 	}
 
 	// remove from dropdown
-	option = me.urlDropDown.querySelector("option[value='" + url + "']");
+	option = me.urlDropdown.querySelector("option[value='" + url + "']");
 	if (option)
 		option.parentNode.removeChild(option);
 
@@ -222,7 +280,7 @@ TSOptions.prototype.removeStyleFromUrl = function(node, url) {
 	styleName = node.parentNode.previousElementSibling.innerHTML;
 
 	me.pageStyleList.removeChild(node.parentNode.parentNode);	// this is not ideal...
-	me.addOption(styleName, styleName, me.styleDropDown);
+	me.addOption(styleName, styleName, me.styleDropdown);
 
 	// update URL settings
 	index = me.savedUrls[url].indexOf(styleName);
@@ -236,18 +294,56 @@ TSOptions.prototype.removeStyleFromUrl = function(node, url) {
 	style.urls.splice(index, 1);
 }
 
+TSOptions.prototype.editUrl = function() {
+	var me = this;
+
+	me.editing.classList.add("hide");
+	me.editingInput.value = me.activeItem;
+	me.editingInput.classList.remove("hide");
+	me.editingInput.focus();
+	me.saveUrlButton.disabled = false;
+	me.editUrlButton.disabled = true;
+}
+
+TSOptions.prototype.saveUrl = function() {
+	var me = this,
+		newUrl = me.editingInput.value,
+		styles, index;
+
+	if (!me.validateUrl(newUrl)) {
+		me.appendError("That's not a valid URL", me.editingInput);
+	}
+	else {
+		//if the URL has changed, we just delete the old one and add the new one in its place
+		if (newUrl !== me.activeItem) {
+			styles = me.savedUrls[me.activeItem];
+			me.addNewUrl(newUrl, styles, true, me.activeItemNode);
+			index = Array.prototype.indexOf.call(me.urlList.childNodes, me.activeItemNode)-1;
+			me.deleteUrl(me.activeItem);
+			me.selectSidebarItem(me.urlList.childNodes.item(index), newUrl);
+		}
+
+		me.clearErrorMessage();
+		me.editing.innerHTML = "<a href='" + newUrl + "' target='_blank'>" + newUrl + "</a>";
+		me.editing.classList.remove("hide");
+		me.editingInput.classList.add("hide");
+		me.saveUrlButton.disabled = true;
+		me.editUrlButton.disabled = false;	
+	}
+}
+
 
 /****************************************************************************************************
  ** Manipulate DOM **********************************************************************************
  ****************************************************************************************************/
 
 // add an option to a dropdown with the specified value and text
-TSOptions.prototype.addOption = function(value, text, dropDown) {
+TSOptions.prototype.addOption = function(value, text, dropdown) {
 	var option = document.createElement("option");
 	option.value = value;
 	option.innerHTML = text;
 
-	dropDown.insertBefore(option, dropDown.firstElementChild.nextElementSibling);
+	dropdown.insertBefore(option, dropdown.firstElementChild.nextElementSibling);
 }
 
 /**
@@ -256,10 +352,10 @@ TSOptions.prototype.addOption = function(value, text, dropDown) {
  * this function is used to add styles to the style list (in url mode)
  *	and also to add urls to the url list (in style mode)
  */
-TSOptions.prototype.addToList = function(name, template, list, dropDown) {
+TSOptions.prototype.addToList = function(name, template, list, dropdown) {
 	var me = this;
 
-	//console.log(name, template, list, dropDown);
+	//console.log(name, template, list, dropdown);
 
 	var node = template.cloneNode(true);
 
@@ -268,20 +364,24 @@ TSOptions.prototype.addToList = function(name, template, list, dropDown) {
 	list.insertBefore(node, template);
 
 	// remove name from dropdown
-	var option = dropDown.querySelector("option[value='" + name + "']");
+	var option = dropdown.querySelector("option[value='" + name + "']");
 	if (option)
 		option.parentNode.removeChild(option);
 }
 
 // append a list element ( <li [tabindex="0"] [class="className"]>item</li> ) to list
-TSOptions.prototype.appendToSidebarList = function(list, item, focusable, className) {
+TSOptions.prototype.appendToSidebarList = function(list, item, focusable, className, targetNode) {
 	var li = document.createElement("li");
 	li.innerHTML = item;
 	if (focusable)
 		li.setAttribute("tabindex", "0");
 	if (className)
 		li.className = className;
-	list.appendChild(li);
+
+	if (targetNode)
+		list.insertBefore(li, targetNode);
+	else
+		list.appendChild(li);
 }
 
 // deselect the current sidebar item and select the new one
@@ -289,7 +389,8 @@ TSOptions.prototype.selectSidebarItem = function(itemNode, item) {
 	var me = this;
 	if (me.activeItemNode)
 		me.activeItemNode.classList.remove("selected");
-	me.activeItem = item;
+	if (item)
+		me.activeItem = item;
 	me.activeItemNode = itemNode;
 	itemNode.classList.add("selected");
 }
@@ -315,23 +416,23 @@ TSOptions.prototype.appendImportants = function() {
 // clear the list of active styles or active pages (depending on the mode)
 TSOptions.prototype.clearActiveList = function(mode) {
 	var me = this,
-		nodes, dropDown, list, name;
+		nodes, dropdown, list, name;
 
 	if (mode === "url") {
 		nodes = document.getElementsByClassName("page-style");
 		list = me.pageStyleList;
-		dropDown = me.styleDropDown;
+		dropdown = me.styleDropdown;
 	}
 	else {
 		nodes = document.getElementsByClassName("style-url");
 		list = me.styleUrlList;
-		dropDown = me.urlDropDown;
+		dropdown = me.urlDropdown;
 	}
 
 	for (var i = nodes.length - 2; i >= 0; i--) {		// subtract 2 to skip the template node
 		name = nodes[i].getElementsByClassName("name")[0].innerHTML
 		list.removeChild(nodes[i]);
-		me.addOption(name, name, dropDown);			
+		me.addOption(name, name, dropdown);			
 	}
 }
 
@@ -364,7 +465,7 @@ TSOptions.prototype.clearErrorMessage = function() {
  */
 TSOptions.prototype.loadUrl = function(url) {
 	var me = this,
-		template, list, dropDown;
+		template, list, dropdown;
 
 	me.editMode = "url";
 	me.clearActiveList("url");
@@ -379,9 +480,9 @@ TSOptions.prototype.loadUrl = function(url) {
 		me.editing.innerHTML = "<a href='" + url + "' + target='_blank'>" + url + "</a>";
 		template = me.pageStyleTemplate;
 		list = me.pageStyleList;
-		dropDown = me.styleDropDown;
+		dropdown = me.styleDropdown;
 		me.savedUrls[url].forEach(function(styleName) {
-			me.addToList(styleName, template, list, dropDown);
+			me.addToList(styleName, template, list, dropdown);
 		});
 	}
 }
@@ -393,7 +494,7 @@ TSOptions.prototype.loadUrl = function(url) {
 TSOptions.prototype.loadStyle = function(styleName) {
 	var me = this,
 		styles = this.savedStyles,
-		template, list, dropDown, urls;
+		template, list, dropdown, urls;
 
 	me.editMode = "style";
 	me.clearActiveList("style");
@@ -408,10 +509,10 @@ TSOptions.prototype.loadStyle = function(styleName) {
 		me.editing.innerHTML = styleName;
 		template = me.styleUrlTemplate;
 		list = me.styleUrlList;
-		dropDown = me.urlDropDown;
+		dropdown = me.urlDropdown;
 
 		styles[styleName].urls.forEach(function(url) {
-			me.addToList(url, template, list, dropDown);
+			me.addToList(url, template, list, dropdown);
 		});
 	}
 
@@ -424,23 +525,23 @@ TSOptions.prototype.loadStyle = function(styleName) {
  ****************************************************************************************************/
 
 // fill the url and style dropdowns
-TSOptions.prototype.fillDropDowns = function() {
+TSOptions.prototype.fillDropdowns = function() {
 	var me = this,
 		styles = this.savedStyles,
 		urls = this.savedUrls,
-		styleDropDown = this.styleDropDown,
-		urlDropDown = this.urlDropDown,
+		styleDropdown = this.styleDropdown,
+		urlDropdown = this.urlDropdown,
 		key;
 
 	for (key in styles) {
 		if (styles.hasOwnProperty(key)) {
-			me.addOption(key, key, styleDropDown);
+			me.addOption(key, key, styleDropdown);
 		}
 	}
 
 	for (key in urls) {
 		if (urls.hasOwnProperty(key)) {
-			me.addOption(key, key, urlDropDown);
+			me.addOption(key, key, urlDropdown);
 		}
 	}
 }
@@ -530,7 +631,7 @@ TSOptions.prototype.loadASetting = function() {
 TSOptions.prototype.initializePage = function() {
 	var me = this;
 	me.loadSidebar();
-	me.fillDropDowns();
+	me.fillDropdowns();
 	me.loadASetting();
 
 	me.addListeners();

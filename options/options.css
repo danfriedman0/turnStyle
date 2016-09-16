@@ -24,6 +24,11 @@ a:visited {
 	color: blue;
 }
 
+textarea {
+	white-space: nowrap;
+	overflow: auto;
+}
+
 .flexbox {
 	display: flex;
 	align-items: flex-start;
@@ -128,7 +133,13 @@ ul {
 }
 
 #editing-name-input {
-	display: none;
+	font-size: 2em;
+	font-weight: bold;
+	font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+.fixed-height {
+	min-height: 3.5em;
 }
 
 hr {
