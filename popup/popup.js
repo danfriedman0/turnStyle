@@ -6,21 +6,28 @@
  */
 
 var TSPopup = function() {
-	this.previewStyle = document.getElementById("preview-style");
-	this.clearStyle = document.getElementById("clear-style");
-	this.saveStyle = document.getElementById("save-style");
-	this.styleNameInput = document.getElementById("style-name-input");
-	this.styleRulesInput = document.getElementById("style-rules-input");
-	this.styleDropDown = document.getElementById("style-dropdown");
-	this.message = document.getElementById("message");
-	this.styleSelector = document.getElementById("style-selector");
-	this.styleEditor = document.getElementById("style-editor");
-	this.closeEditor = document.getElementById("close-editor");
+
+	// page URL
 	this.pageUrlDisplay = document.getElementById("page-url-display");
 	this.pageUrlInput = document.getElementById("page-url-input");
 	this.editUrl = document.getElementById("edit-url");
 	this.saveUrl = document.getElementById("save-url");
+
+	// style selector
+	this.message = document.getElementById("message");
+	this.styleSelector = document.getElementById("style-selector");
+	this.styleDropdown = document.getElementById("style-dropdown");
+
+	// style editor and buttons
+	this.styleEditor = document.getElementById("style-editor");
+	this.closeEditor = document.getElementById("close-editor");
+	this.styleNameInput = document.getElementById("style-name-input");
+	this.styleRulesInput = document.getElementById("style-rules-input");
+	this.previewStyle = document.getElementById("preview-style");
+	this.clearStyle = document.getElementById("clear-style");
 	this.importantButton = document.getElementById("append-importants");
+	this.saveStyle = document.getElementById("save-style");
+
 
 	this.baseUrl = "";
 	this.fullUrl = "";
@@ -31,18 +38,18 @@ var TSPopup = function() {
 	this.initialize();
 }
 
+/****************************************************************************************************
+ ** Events ******************************************************************************************
+ ****************************************************************************************************/
+
+
 TSPopup.prototype.addListeners = function() {
 	var me = this;
 
 	me.previewStyle.addEventListener("click", function() {
 		if (me.styleRulesInput.value) {
 			var styleRules = me.escapeHtml(me.styleRulesInput.value);
-			me.sendRequest({
-				instruction: "insertStyle",
-				styleRules: styleRules,
-				styleId: "ts-preview"
-			});	
-			me.clearStyle.disabled = false;	
+			me.preview(styleRules);
 		}
 	});
 
@@ -55,34 +62,15 @@ TSPopup.prototype.addListeners = function() {
 		var styleRules = me.escapeHtml(me.styleRulesInput.value);
 		var errorMessage;
 
-		if (!styleName || !styleRules) {
-			if (!styleName)
-				me.appendError("You should give your style a name", me.styleNameInput);
-			else
-				me.appendError("You should add some rules", me.styleRulesInput);
-		}
-		else if (me.pageStyles.indexOf(styleName) > -1) {
-			me.sendRequest({instruction: "editStyle", styleName: styleName, styleRules: styleRules});
-			me.styleEditor.style.display = "none";
-			me.styleDropDown.value = "";
-		}
-		else {
-			me.pageStyles.push(styleName);
-			me.styles[styleName] = styleRules;
-			me.sendRequest({
-				instruction: "saveStyle",
-				activeUrl: me.activeUrl,
-				styleName: styleName,
-				styleRules: styleRules
-			});
-			me.addStyleToList(styleName);
-			me.styleEditor.style.display = "none";
-			me.styleDropDown.value = "";
-		}
-		me.clearPreview();
+		if (!styleName)
+			me.appendError("You should give your style a name", me.styleNameInput);
+		else if (!styleRules)
+			me.appendError("You should add some rules", me.styleRulesInput);
+		else
+			me.saveStyle(styleName, styleRules);
 	});
 
-	me.styleDropDown.addEventListener("change", function() {
+	me.styleDropdown.addEventListener("change", function() {
 		var styleName = this.value;
 		if (styleName)
 			me.openStyleEditor(styleName);
@@ -92,7 +80,7 @@ TSPopup.prototype.addListeners = function() {
 
 	me.closeEditor.addEventListener("click", function() {
 		me.styleEditor.style.display = "none";
-		me.styleDropDown.value = "";
+		me.styleDropdown.value = "";
 		me.clearPreview();
 	});
 
@@ -113,13 +101,7 @@ TSPopup.prototype.addListeners = function() {
 			me.appendError("The URL has to start with " + me.baseUrl, me.pageUrlInput);
 		}
 		else {
-			me.activeUrl = newUrl;
-			me.pageUrlDisplay.innerHTML = newUrl;
-
-			me.clearErrorMessage();
-			me.editUrl.disabled = false;
-			me.pageUrlInput.style.display = "none";
-			me.pageUrlDisplay.style.display = "block";
+			me.saveUrl(newUrl);
 			this.disabled = true;
 		}
 	});
@@ -129,41 +111,24 @@ TSPopup.prototype.addListeners = function() {
 	});
 }
 
-TSPopup.prototype.addOption = function(value, text) {
-	var option = document.createElement("option");
-	var dropDown = this.styleDropDown;
-	option.value = value;
-	option.innerHTML = text;
+/****************************************************************************************************
+ ** Style changes ***********************************************************************************
+ ****************************************************************************************************/
 
-	dropDown.insertBefore(option, dropDown.firstElementChild.nextElementSibling);
-}
-
-TSPopup.prototype.fillDropDown = function() {
-	var styles = this.styles;
+// Save changes to the active URL
+TSPopup.prototype.saveUrl = function(url) {
 	var me = this;
 
-	for (var key in styles) {
-		if (styles.hasOwnProperty(key)) {
-			me.addOption(key, key);
-		}
-	}
+	me.activeUrl = url;
+	me.pageUrlDisplay.innerHTML = newUrl;
+
+	me.clearErrorMessage();
+	me.editUrl.disabled = false;
+	me.pageUrlInput.style.display = "none";
+	me.pageUrlDisplay.style.display = "block";
 }
 
-TSPopup.prototype.appendError = function(errorMessage, node) {
-	// only show one error message at a time
-	this.clearErrorMessage();
-
-	var error = document.createElement("div");
-	error.id = "error-message";
-	error.innerHTML = errorMessage;
-	node.parentNode.insertBefore(error, node.nextElementSibling);
-}
-
-TSPopup.prototype.editStyle = function(styleName) {
-	this.styleDropDown.value = "";
-	this.openStyleEditor(styleName);
-}
-
+// Remove a style from the page, from the style list, and from the saved settings
 TSPopup.prototype.removeStyle = function(styleNode, styleName) {
 	var index = this.pageStyles.indexOf(styleName),
 		activeUrl = this.activeUrl;
@@ -184,12 +149,133 @@ TSPopup.prototype.removeStyle = function(styleNode, styleName) {
 	this.addOption(styleName, styleName);
 }
 
+/**
+ * saveStyle: update the style if it's already been added to the page;
+ *	otherwise save it and add it to the page
+ */
+TSPopup.saveStyle = function(styleName, styleRules) {
+	var me = this;
+
+	if (me.pageStyles.indexOf(styleName) > -1) {
+		me.sendRequest({instruction: "editStyle", styleName: styleName, styleRules: styleRules});
+		me.styleEditor.style.display = "none";
+		me.styleDropdown.value = "";
+	}
+	else {
+		me.pageStyles.push(styleName);
+		me.styles[styleName] = styleRules;
+		me.sendRequest({
+			instruction: "saveStyle",
+			activeUrl: me.activeUrl,
+			styleName: styleName,
+			styleRules: styleRules
+		});
+		me.addStyleToList(styleName);
+		me.styleEditor.style.display = "none";
+		me.styleDropdown.value = "";
+	}
+
+	me.clearPreview();
+}
+
+// Clear the preview style from the page
 TSPopup.prototype.clearPreview = function() {
 	this.sendRequest({
 		instruction: "removeStyle",
 		styleId: "ts-preview"
 	});
 	this.disabled = true;
+}
+
+// Add a preview of the style to the page
+TSPopup.preview = function(styleRules) {
+	var me = this;
+	me.sendRequest({
+		instruction: "insertStyle",
+		styleRules: styleRules,
+		styleId: "ts-preview"
+	});	
+	me.clearStyle.disabled = false;	
+}
+
+/****************************************************************************************************
+ ** Handle input ************************************************************************************
+ ****************************************************************************************************/
+
+// based on code from StackOverflow (http://stackoverflow.com/a/6234804)
+TSPopup.prototype.escapeHtml = function(unsafe) {
+	return unsafe
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
+
+// append an error message to the specified node
+TSPopup.prototype.appendError = function(errorMessage, node) {
+	// only show one error message at a time
+	this.clearErrorMessage();
+
+	var error = document.createElement("div");
+	error.id = "error-message";
+	error.innerHTML = errorMessage;
+	node.parentNode.insertBefore(error, node.nextElementSibling);
+}
+
+// clear the error message from the page
+TSPopup.prototype.clearErrorMessage = function() {
+	var error = document.getElementById("error-message");
+	if (error)
+		error.parentNode.removeChild(error);
+}
+
+/****************************************************************************************************
+ ** Configure style editor **************************************************************************
+ ****************************************************************************************************/
+
+TSPopup.prototype.editStyle = function(styleName) {
+	this.styleDropdown.value = "";
+	this.openStyleEditor(styleName);
+}
+
+// add "!important" to every style rule that doesn't already have one
+TSPopup.prototype.appendImportants = function() {
+	var me = this;
+	console.log(me);
+	var styleRules = me.escapeHtml(me.styleRulesInput.value);
+	var lines = [];
+
+	if (styleRules) {
+		styleRules = styleRules.replace(/ !important/g, "");	// get rid of any previous !importants
+		lines = styleRules.split(";");
+		styleRules = lines.join(" !important;");
+		me.styleRulesInput.value = styleRules;
+	}
+}
+
+// load the style name and style rules into the editor
+TSPopup.prototype.openStyleEditor = function(styleName) {
+	var me = this;
+	me.clearErrorMessage();
+	var styleRules = me.styles[styleName];
+	if (!styleRules)
+		styleName = styleRules = "";
+	me.styleNameInput.value = styleName;
+	me.styleRulesInput.value = styleRules;
+	me.styleEditor.style.display = "block";
+}
+
+/****************************************************************************************************
+ ** Manipulate DOM **********************************************************************************
+ ****************************************************************************************************/
+
+// add an option to the dropdown
+TSPopup.prototype.addOption = function(value, text) {
+	var option = document.createElement("option");
+	var dropdown = this.styleDropdown;
+	option.value = value;
+	option.innerHTML = text;
+
+	dropdown.insertBefore(option, dropdown.firstElementChild.nextElementSibling);
 }
 
 /**
@@ -217,72 +303,24 @@ TSPopup.prototype.addStyleToList = function(styleName) {
 	styleList.insertBefore(newStyle, pageStyleTemplate);
 
 	// remove name from dropdown
-	var option = this.styleDropDown.querySelector("option[value='" + styleName + "']");
+	var option = this.styleDropdown.querySelector("option[value='" + styleName + "']");
 	if (option)
 		option.parentNode.removeChild(option);
 }
 
-TSPopup.prototype.openStyleEditor = function(styleName, editorMode) {
-	var me = this;
-	me.clearErrorMessage();
-	var styleRules = me.styles[styleName];
-	if (!styleRules)
-		styleName = styleRules = "";
-	me.styleNameInput.value = styleName;
-	me.styleRulesInput.value = styleRules;
-	me.styleEditor.style.display = "block";
-}
+/****************************************************************************************************
+ ** Page setup **************************************************************************************
+ ****************************************************************************************************/
 
-TSPopup.prototype.appendImportants = function() {
+TSPopup.prototype.fillDropdown = function() {
+	var styles = this.styles;
 	var me = this;
-	console.log(me);
-	var styleRules = me.escapeHtml(me.styleRulesInput.value);
-	var lines = [];
 
-	if (styleRules) {
-		styleRules = styleRules.replace(/ !important/g, "");	// get rid of any previous !importants
-		lines = styleRules.split(";");
-		styleRules = lines.join(" !important;");
-		me.styleRulesInput.value = styleRules;
+	for (var key in styles) {
+		if (styles.hasOwnProperty(key)) {
+			me.addOption(key, key);
+		}
 	}
-}
-
-TSPopup.prototype.clearErrorMessage = function() {
-	var error = document.getElementById("error-message");
-	if (error)
-		error.parentNode.removeChild(error);
-}
-
-/**
- * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response,
- *	bound to the specified context
- */
-TSPopup.prototype.sendRequest = function(request, callback, context) {
-	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-		chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
-			if (callback && context)
-				callback.bind(context, response)();
-		});
-	});	
-}
-
-/**
- * displayReponse: displays a response in the message field of the popup if the response is a string
- *		or if it has a message field
- */
-TSPopup.prototype.displayResponse = function(response) {
-	if ((typeof response).toLowerCase() === "string")
-		this.message.innerHTML = response;
-	else if (response && response.message)
-		this.message.innerHTML = response.message;
-}
-
-// based on code from StackOverflow (http://stackoverflow.com/a/6234804)
-TSPopup.prototype.escapeHtml = function(unsafe) {
-	return unsafe
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
 }
 
 TSPopup.prototype.loadSettings = function(settings) {
@@ -297,13 +335,34 @@ TSPopup.prototype.loadSettings = function(settings) {
 	me.pageUrlDisplay.innerHTML = me.activeUrl;
 	me.pageUrlInput.value = me.activeUrl;
 
-	me.fillDropDown();
+	me.fillDropdown();
 	if (me.pageStyles) {
 		me.pageStyles.forEach(function(styleName) {
 			me.addStyleToList(styleName);
 		});
 	}
 }
+
+/****************************************************************************************************
+ ** Messaging ***************************************************************************************
+ ****************************************************************************************************/
+
+/**
+ * sendRequest: sends a message to the content script (turnstyle.js) and calls callback on the response,
+ *	bound to the specified context
+ */
+TSPopup.prototype.sendRequest = function(request, callback, context) {
+	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
+			if (callback && context)
+				callback.bind(context, response)();
+		});
+	});	
+}
+
+/****************************************************************************************************
+ ** Initialize **************************************************************************************
+ ****************************************************************************************************/
 
 TSPopup.prototype.initialize = function() {
 	var me = this;
