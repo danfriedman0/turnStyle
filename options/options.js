@@ -345,6 +345,9 @@ TSOptions.prototype.openPopup = function(message, mode, callback) {
 				callback(input);
 			}
 		}
+		else {
+			me.popup.classList.add("hide");
+		}
 	});
 
 	me.popup.classList.remove("hide");
