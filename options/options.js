@@ -163,6 +163,9 @@ TSOptions.prototype.addListeners = function() {
 		if (!styleName) {
 			me.appendError("You should give your style a name", me.styleNameInput);
 		}
+		else if (styleName === "write-a-new-style") {
+			me.appendError("Sorry, that name is restricted", me.styleNameInput);
+		}
 		else if (!styleRules) {
 			me.appendError("You should add some rules", me.styleRulesInput);
 		}
@@ -360,6 +363,9 @@ TSOptions.prototype.openPopup = function(message, mode, callback) {
 			}
 			else if (mode === "prompt-style" && !me.validateStyleName(input)) {
 				me.appendError("That style already exists", me.popupInput);
+			}
+			else if (mode === "prompt-style" && input === "write-a-new-style") {
+				me.appendError("Sorry, that name is restricted");
 			}
 			else {
 				me.popup.classList.add("hide");

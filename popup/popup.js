@@ -80,14 +80,13 @@ TSPopup.prototype.addListeners = function() {
 		if (styleName)
 			// I have to do this because the dropdown makes everything flicker
 			setTimeout(function() {
-				me.saveStyle(styleName, styleRules);			
+				if (styleName === "write-a-new-style")
+					me.openStyleEditor("")
+				else
+					me.saveStyle(styleName, styleRules);			
 			}, 175);
 		else
 			me.styleEditor.style.display = "none";
-	});
-
-	document.getElementById("add-new-style-button").addEventListener("click", function() {
-		me.openStyleEditor();
 	});
 
 	me.tabModeInput.addEventListener("click", function() {
@@ -136,6 +135,8 @@ TSPopup.prototype.addListeners = function() {
 
 		if (!styleName)
 			me.appendError("You should give your style a name", me.styleNameInput);
+		else if (styleName === "write-a-new-style")
+			me.appendError("Sorry, that name is restricted", me.styleNameInput);
 		else if (!styleRules)
 			me.appendError("You should add some rules", me.styleRulesInput);
 		else
