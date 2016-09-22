@@ -23,6 +23,7 @@ var TSPopup = function() {
 	this.tabModeInput = document.getElementById("tab-mode");
 	this.styleNameInput = document.getElementById("style-name-input");
 	this.styleRulesInput = document.getElementById("style-rules-input");
+	this.clearStyle = document.getElementById("clear-style");
 
 	this.baseUrl = "";
 	this.fullUrl = "";
