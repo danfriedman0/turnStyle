@@ -131,7 +131,7 @@ TSPopup.prototype.addListeners = function() {
 
 	document.getElementById("save-style").addEventListener("click", function() {
 		var styleName = me.escapeHtml(me.styleNameInput.value);
-		var styleRules = me.escapeHtml(me.styleRulesInput.value);
+		var styleRules = me.styleRulesInput.value;
 		var errorMessage;
 
 		if (!styleName)

@@ -24,8 +24,15 @@ var TurnStyle = function() {
 
 // override the page's style by inserting the css rules with optional class name and id
 TurnStyle.prototype.addStyleToPage = function(styleRules, styleId, className) {
+	var node;
 	if (styleRules) {
-		var node = document.createElement("style");
+		if (styleRules.startsWith("script")) {
+			node = document.createElement("script");
+			styleRules = styleRules.slice(7);
+		}
+		else {
+			node = document.createElement("style");
+		}
 		node.setAttribute("class", "turnstyle");
 		if (className)
 			node.classList.add(className);
